@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -10,7 +12,6 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -230,9 +231,37 @@ class _RegisterPageState extends State<RegisterPage> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        // Handle registration logic
+                        final registrationData = {
+                          'email': _emailController.text,
+                          'password': _passwordController.text,
+                          'firstName': _firstNameController.text,
+                          'middleName': _middleNameController.text,
+                          'lastName': _lastNameController.text,
+                          'phoneNumber': _phoneController.text,
+                          'gender': _selectedGender,
+                        };
+
+                        try {
+                          final response = await http.post(
+                            Uri.parse('https://10.0.2.2/api/account/register'),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode(registrationData),
+                          );
+
+                          if (response.statusCode == 200) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Registration Successful!')),
+                              );
+                            }
+                          } else {
+                            print('Error: ${response.statusCode} - ${response.body}');
+                          }
+                        } catch (e) {
+                          print('Exception: $e');
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
