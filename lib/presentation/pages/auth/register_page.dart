@@ -264,10 +264,17 @@ class _RegisterPageState extends State<RegisterPage> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Registration Successful!'),
+                                  content: Text('Registration Successful! Redirecting to Login...'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
+                              
+                              // Redirect to Login page after a short delay
+                              Future.delayed(const Duration(seconds: 2), () {
+                                if (mounted) {
+                                  Navigator.pushReplacementNamed(context, '/login');
+                                }
+                              });
                             }
                           } else {
                             print('Registration Error: ${response.statusCode} - ${response.body}');
