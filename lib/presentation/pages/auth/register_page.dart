@@ -96,6 +96,7 @@ class _RegisterPageState extends State<RegisterPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -121,7 +122,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: _firstNameController,
                   decoration: _getInputDecoration(hintText: 'Enter first name'),
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                  validator: (value) => value == null || value.isEmpty ? 'First name is required' : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -136,7 +137,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: _lastNameController,
                   decoration: _getInputDecoration(hintText: 'Enter last name'),
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                  validator: (value) => value == null || value.isEmpty ? 'Last name is required' : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -146,9 +147,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: _getInputDecoration(hintText: 'Enter your email'),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Required';
+                    if (value == null || value.isEmpty) return 'Email is required';
                     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Enter a valid email';
+                      return 'Enter a valid email address';
                     }
                     return null;
                   },
@@ -160,7 +161,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: _getInputDecoration(hintText: 'Enter phone number'),
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                  validator: (value) => value == null || value.isEmpty ? 'Phone number is required' : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -179,7 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       _selectedGender = newValue;
                     });
                   },
-                  validator: (value) => value == null ? 'Please select gender' : null,
+                  validator: (value) => value == null ? 'Please select your gender' : null,
                   icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF94A3B8)),
                   dropdownColor: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -201,7 +202,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                     ),
                   ),
-                  validator: (value) => (value != null && value.length >= 6) ? null : 'Min 6 characters',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Password is required';
+                    if (value.length < 8) return 'Password must be at least 8 characters long';
+                    if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Add at least one uppercase letter';
+                    if (!RegExp(r'[a-z]').hasMatch(value)) return 'Add at least one lowercase letter';
+                    if (!RegExp(r'[0-9]').hasMatch(value)) return 'Add at least one number';
+                    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) return 'Add at least one special character';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -221,6 +230,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   validator: (value) {
+                    if (value == null || value.isEmpty) return 'Please confirm your password';
                     if (value != _passwordController.text) return 'Passwords do not match';
                     return null;
                   },
@@ -245,7 +255,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         try {
                           final response = await http.post(
-                            Uri.parse('https://10.0.2.2:7209/api/account/register'),
+                            Uri.parse('https://10.0.2.2:7241/api/account/register'),
                             headers: {'Content-Type': 'application/json'},
                             body: jsonEncode(registrationData),
                           );
@@ -253,14 +263,33 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (response.statusCode == 200) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Registration Successful!')),
+                                const SnackBar(
+                                  content: Text('Registration Successful!'),
+                                  backgroundColor: Colors.green,
+                                ),
                               );
                             }
                           } else {
-                            print('Error: ${response.statusCode} - ${response.body}');
+                            print('Registration Error: ${response.statusCode} - ${response.body}');
+                            if (mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: ${response.statusCode}. Check console.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
                           }
                         } catch (e) {
-                          print('Exception: $e');
+                          print('Connection Exception: $e');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not connect to the server.'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
                         }
                       }
                     },
