@@ -23,6 +23,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _selectedGender;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false;
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
 
@@ -96,7 +98,7 @@ class _RegisterPageState extends State<RegisterPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(
             key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
+            autovalidateMode: _autovalidateMode,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -241,8 +243,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () async {
+                    onPressed: _isLoading ? null : () async {
                       if (_formKey.currentState!.validate()) {
+                        setState(() => _isLoading = true);
                         final registrationData = {
                           'email': _emailController.text,
                           'password': _passwordController.text,
@@ -269,7 +272,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               );
                               
-                              // Redirect to Login page after a short delay
                               Future.delayed(const Duration(seconds: 2), () {
                                 if (mounted) {
                                   Navigator.pushReplacementNamed(context, '/login');
@@ -297,7 +299,14 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             );
                           }
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
                         }
+                      } else {
+                        // Enable autovalidate after the first failed submission attempt
+                        setState(() {
+                          _autovalidateMode = AutovalidateMode.onUserInteraction;
+                        });
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -308,10 +317,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    child: _isLoading 
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Create Account',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                   ),
                 ),
                 const SizedBox(height: 24),
