@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -186,6 +187,13 @@ class _LoginPageState extends State<LoginPage> {
                           );
 
                           if (response.statusCode == 200) {
+                            final data = jsonDecode(response.body);
+                            final token = data['accessToken'];
+                            
+                            if (token != null) {
+                              await AuthService().login(token);
+                            }
+
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -200,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                             print('Login Error: ${response.statusCode} - ${response.body}');
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                   content: Text('Login failed. Please check your credentials.'),
                                   backgroundColor: Colors.redAccent,
                                 ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -264,19 +265,23 @@ class _RegisterPageState extends State<RegisterPage> {
                           );
 
                           if (response.statusCode == 200) {
+                            final data = jsonDecode(response.body);
+                            final token = data['accessToken'];
+                            
+                            if (token != null) {
+                              await AuthService().login(token);
+                            }
+
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Registration Successful! Redirecting to Login...'),
+                                  content: Text('Registration Successful!'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
                               
-                              Future.delayed(const Duration(seconds: 2), () {
-                                if (mounted) {
-                                  Navigator.pushReplacementNamed(context, '/login');
-                                }
-                              });
+                              // Navigate to home page if registered and logged in
+                              Navigator.pushReplacementNamed(context, '/');
                             }
                           } else {
                             print('Registration Error: ${response.statusCode} - ${response.body}');

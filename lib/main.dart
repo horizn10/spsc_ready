@@ -3,6 +3,7 @@ import 'core/theme/app_colors.dart';
 import 'presentation/navigation/main_navigation_wrapper.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
+import 'core/services/auth_service.dart';
 import 'dart:io';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -13,8 +14,14 @@ class MyHttpOverrides extends HttpOverrides {
           (X509Certificate cert, String host, int port) => true;
   }
 }
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
+  
+  // Initialize AuthService and check for existing token
+  await AuthService().init();
+
   runApp(const SpscReadyApp());
 }
 

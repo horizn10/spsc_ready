@@ -30,12 +30,20 @@ class _BrowsePaperPageState extends State<BrowsePaperPage> {
 
   void _loadPapers() {
     setState(() {
-      _papersFuture = _apiService.searchPapers(
-        _searchQuery,
-        dept: _selectedDept,
-        year: _selectedYear,
-        stage: _selectedStage,
-      );
+      // Show all papers if no filters or search query are applied
+      if (_searchQuery.isEmpty &&
+          _selectedDept == null &&
+          _selectedYear == null &&
+          _selectedStage == null) {
+        _papersFuture = _apiService.getAllPapers();
+      } else {
+        _papersFuture = _apiService.searchPapers(
+          _searchQuery,
+          dept: _selectedDept,
+          year: _selectedYear,
+          stage: _selectedStage,
+        );
+      }
     });
   }
 
