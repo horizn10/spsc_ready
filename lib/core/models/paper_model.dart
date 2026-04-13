@@ -19,26 +19,26 @@ class PaperModel {
 
   factory PaperModel.fromJson(Map<String, dynamic> json) {
     // Navigate the nested structure returned by the backend
+    // Try primary path: examCycle -> post -> department
     final examCycle = json['examCycle'] ?? {};
     final post = examCycle['post'] ?? {};
-    final department = examCycle['department'] ?? {};
-    final examStage = json['examStage'] ?? {};
+    
+    // Try multiple possible locations for department
+    final deptObj = examCycle['department'] ?? post['department'] ?? json['department'] ?? {};
+    final stageObj = json['examStage'] ?? {};
 
     String rawPdfUrl = json['pdfUrl'] ?? '';
-    // Ensure the PDF URL is absolute so the viewer can find it
     if (rawPdfUrl.isNotEmpty && !rawPdfUrl.startsWith('http')) {
-      // Use the same IP/Port as your ApiService
-      // Note: We're using 7241 as confirmed by your logs
       rawPdfUrl = 'https://10.0.2.2:7241$rawPdfUrl';
     }
 
     return PaperModel(
       id: json['id']?.toString() ?? '',
-      postName: post['name'] ?? '',
-      paperName: json['title'] ?? '',
-      department: department['name'] ?? '',
+      postName: post['name'] ?? json['postName'] ?? '',
+      paperName: json['title'] ?? json['paperName'] ?? '',
+      department: deptObj['name'] ?? '',
       year: examCycle['examYear']?.toString() ?? '',
-      examStage: examStage['name'] ?? '',
+      examStage: stageObj['name'] ?? '',
       pdfUrl: rawPdfUrl,
     );
   }

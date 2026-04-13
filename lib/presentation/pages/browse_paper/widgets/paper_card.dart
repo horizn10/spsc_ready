@@ -99,8 +99,8 @@ class PaperCard extends StatelessWidget {
               children: [
                 const TextSpan(text: 'Department: '),
                 TextSpan(
-                  text: paper.department,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  text: paper.department.isNotEmpty ? paper.department : 'General',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.headingText),
                 ),
               ],
             ),

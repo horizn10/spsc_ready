@@ -1,21 +1,22 @@
 class DepartmentModel {
-  final String id; // Changed from int to String
+  final String id;
   final String name;
-  final int paperCount;
+  final int postCount; // Changed from paperCount to postCount for clarity
   final String iconCode;
 
   DepartmentModel({
     required this.id,
     required this.name,
-    required this.paperCount,
+    required this.postCount,
     required this.iconCode,
   });
 
   factory DepartmentModel.fromJson(Map<String, dynamic> json) {
     return DepartmentModel(
-      id: json['id']?.toString() ?? '', // Convert to string safely
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
-      paperCount: json['paperCount'] ?? 0,
+      // Backend should ideally return a 'postCount' or we use whatever count is sent as postCount
+      postCount: json['postCount'] ?? json['paperCount'] ?? 0, 
       iconCode: json['iconCode'] ?? '',
     );
   }
@@ -24,7 +25,7 @@ class DepartmentModel {
     return {
       'id': id,
       'name': name,
-      'paperCount': paperCount,
+      'postCount': postCount,
       'iconCode': iconCode,
     };
   }

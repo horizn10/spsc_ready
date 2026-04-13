@@ -60,11 +60,6 @@ class DepartmentCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                             color: AppColors.headingText)),
-                    Text('${department.paperCount} Papers',
-                        style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -108,15 +103,6 @@ class DepartmentCard extends StatelessWidget {
               department.name,
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${department.paperCount} Papers',
-              style: const TextStyle(
-                color: AppColors.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
             ),
           ],
         ),
