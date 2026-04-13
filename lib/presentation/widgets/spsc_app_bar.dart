@@ -7,6 +7,7 @@ class SpscAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ValueListenableBuilder automatically rebuilds this widget when AuthService().isLoggedIn changes
     return ValueListenableBuilder<bool>(
       valueListenable: AuthService().isLoggedIn,
       builder: (context, isLoggedIn, _) {
@@ -18,7 +19,7 @@ class SpscAppBar extends StatelessWidget implements PreferredSizeWidget {
           automaticallyImplyLeading: false,
           title: Row(
             children: [
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6.0),
                 decoration: BoxDecoration(
@@ -50,11 +51,12 @@ class SpscAppBar extends StatelessWidget implements PreferredSizeWidget {
       Padding(
         padding: const EdgeInsets.only(right: 16.0),
         child: PopupMenuButton<String>(
-          offset: const Offset(0, 50),
+          offset: const Offset(0, 45),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           onSelected: (value) async {
             if (value == 'logout') {
               await AuthService().logout();
-              // Optional: Redirect to home or show message
+              // No need to navigate, ValueListenableBuilder will update the UI
             }
           },
           itemBuilder: (context) => [
@@ -62,27 +64,34 @@ class SpscAppBar extends StatelessWidget implements PreferredSizeWidget {
               value: 'profile',
               child: Row(
                 children: [
-                  Icon(Icons.person_outline, size: 20),
-                  SizedBox(width: 8),
-                  Text('Profile'),
+                  Icon(Icons.person_outline, size: 20, color: AppColors.bodyText),
+                  SizedBox(width: 12),
+                  Text('My Profile'),
                 ],
               ),
             ),
+            const PopupMenuDivider(),
             const PopupMenuItem(
               value: 'logout',
               child: Row(
                 children: [
-                  Icon(Icons.logout, size: 20, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Logout', style: TextStyle(color: Colors.red)),
+                  Icon(Icons.logout_rounded, size: 20, color: Colors.redAccent),
+                  SizedBox(width: 12),
+                  Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
           ],
-          child: const CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary,
-            child: Icon(Icons.person, color: Colors.white, size: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+            ),
+            child: const CircleAvatar(
+              radius: 18,
+              backgroundColor: Color(0xFFF1F5F9), // Light slate background
+              child: Icon(Icons.person_rounded, color: AppColors.primary, size: 22),
+            ),
           ),
         ),
       ),
@@ -92,33 +101,27 @@ class SpscAppBar extends StatelessWidget implements PreferredSizeWidget {
   List<Widget> _buildLoggedOutActions(BuildContext context) {
     return [
       TextButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/login');
-        },
+        onPressed: () => Navigator.pushNamed(context, '/login'),
         child: const Text(
           'Login',
           style: TextStyle(
             color: AppColors.primary,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
       Padding(
-        padding: const EdgeInsets.only(right: 16, left: 8),
+        padding: const EdgeInsets.only(right: 16, left: 4),
         child: ElevatedButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/register');
-          },
+          onPressed: () => Navigator.pushNamed(context, '/register'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          child: const Text('Register'),
+          child: const Text('Register', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ),
     ];

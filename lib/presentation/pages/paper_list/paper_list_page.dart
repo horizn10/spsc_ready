@@ -21,7 +21,7 @@ class _PaperListPageState extends State<PaperListPage> {
   @override
   void initState() {
     super.initState();
-    _papersFuture = _apiService.getPapersByPost(widget.post.id);
+    _papersFuture = _apiService.getPapersByPost(widget.post.name);
   }
 
   @override

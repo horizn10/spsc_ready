@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
@@ -184,44 +185,77 @@ class _LoginPageState extends State<LoginPage> {
                             Uri.parse('https://10.0.2.2:7241/api/account/login'),
                             headers: {'Content-Type': 'application/json'},
                             body: jsonEncode(loginData),
-                          );
+                          ).timeout(const Duration(seconds: 10));
 
                           if (response.statusCode == 200) {
                             final data = jsonDecode(response.body);
-                            final token = data['accessToken'];
+                            // Support both 'accessToken' and 'token' keys
+                            final token = data['accessToken'] ?? data['token'];
                             
                             if (token != null) {
                               await AuthService().login(token);
+                              
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Login Successful!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                Navigator.pushReplacementNamed(context, '/');
+                              }
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Error: Login succeeded but no token received.'),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                              }
                             }
-
+                          } else if (response.statusCode == 401 || response.statusCode == 400) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Login Successful!'),
-                                  backgroundColor: Colors.green,
+                                  content: Text('Invalid email or password. Please try again.'),
+                                  backgroundColor: Colors.orange,
                                 ),
                               );
-                              // Navigate to home page
-                              Navigator.pushReplacementNamed(context, '/');
                             }
                           } else {
-                            print('Login Error: ${response.statusCode} - ${response.body}');
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Login failed. Please check your credentials.'),
+                                SnackBar(
+                                  content: Text('Server error: ${response.statusCode}. Please try again later.'),
                                   backgroundColor: Colors.redAccent,
                                 ),
                               );
                             }
                           }
                         } catch (e) {
-                          print('Connection Exception: $e');
+                          print('Login Exception: $e');
                           if (mounted) {
+                            String message = 'Connection error. Please check your internet or if the server is running.';
+                            
+                            if (e.toString().contains('TimeoutException')) {
+                              message = 'Server took too long to respond. Please try again.';
+                            } else if (e is SocketException) {
+                              message = 'Could not connect to server. Ensure your backend is running at port 7241.';
+                            }
+
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Could not connect to the server.'),
+                              SnackBar(
+                                content: Text(message),
                                 backgroundColor: Colors.redAccent,
+                                duration: const Duration(seconds: 5),
+                                action: SnackBarAction(
+                                  label: 'RETRY',
+                                  textColor: Colors.white,
+                                  onPressed: () {
+                                    // The user can tap the login button again
+                                  },
+                                ),
                               ),
                             );
                           }

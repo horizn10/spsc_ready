@@ -1,5 +1,5 @@
 class DepartmentModel {
-  final int id;
+  final String id; // Changed from int to String
   final String name;
   final int paperCount;
   final String iconCode;
@@ -13,7 +13,7 @@ class DepartmentModel {
 
   factory DepartmentModel.fromJson(Map<String, dynamic> json) {
     return DepartmentModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '', // Convert to string safely
       name: json['name'] ?? '',
       paperCount: json['paperCount'] ?? 0,
       iconCode: json['iconCode'] ?? '',

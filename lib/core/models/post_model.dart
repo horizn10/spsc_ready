@@ -1,8 +1,8 @@
 class PostModel {
-  final int id;
+  final String id; // Changed from int to String
   final String name;
   final int paperCount;
-  final int departmentId;
+  final String departmentId; // Changed from int to String
 
   PostModel({
     required this.id,
@@ -13,10 +13,10 @@ class PostModel {
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '', // Safe string conversion
       name: json['name'] ?? '',
       paperCount: json['paperCount'] ?? 0,
-      departmentId: json['departmentId'] ?? 0,
+      departmentId: json['departmentId']?.toString() ?? '',
     );
   }
 

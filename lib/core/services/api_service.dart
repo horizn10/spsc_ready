@@ -6,20 +6,22 @@ import '../models/paper_model.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  // BaseUrl for the API - easily switch between localhost and production
-  static const String baseUrl = 'https://api.spscready.com/api';
+  // Use 10.0.2.2 for Android Emulator. 
+  // HTTPS: 7241, HTTP: 5116 (Based on standard .NET configurations)
+  static const String baseUrl = 'https://10.0.2.2:7241/api';
 
   Map<String, String> get _headers {
     final headers = {'Content-Type': 'application/json'};
+    // We include headers, but if the backend has [AllowAnonymous], it will ignore missing tokens.
     headers.addAll(AuthService().getAuthHeaders());
     return headers;
   }
 
-  /// Fetches the dynamic list of departments for the Home and Browse pages.
+  /// Fetches the dynamic list of departments from the PapersController
   Future<List<DepartmentModel>> getDepartments() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/departments'),
+        Uri.parse('$baseUrl/Papers/departments'),
         headers: _headers,
       );
 
@@ -27,7 +29,8 @@ class ApiService {
         List<dynamic> data = json.decode(response.body);
         return data.map((json) => DepartmentModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load departments');
+        print('ApiService Error (${response.statusCode}): ${response.body}');
+        return [];
       }
     } catch (e) {
       print('Error fetching departments: $e');
@@ -35,70 +38,44 @@ class ApiService {
     }
   }
 
-  /// Fetches the specific papers for a post by its ID.
-  Future<List<PaperModel>> getPapersByPost(int postId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/papers/post/$postId'),
-        headers: _headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        return data.map((json) => PaperModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load papers for post $postId');
-      }
-    } catch (e) {
-      print('Error fetching papers by post: $e');
-      return [];
-    }
-  }
-
-  /// Fetches all papers from the database.
+  /// Fetches all papers or filtered papers from the main Papers endpoint
   Future<List<PaperModel>> getAllPapers() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/papers'),
-        headers: _headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        return data.map((json) => PaperModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load papers');
-      }
-    } catch (e) {
-      print('Error fetching all papers: $e');
-      return [];
-    }
+    return searchPapers(''); // Reuses searchPapers logic without query
   }
 
-  /// Handles the dynamic search logic for papers with optional filters.
+  /// Fetches the specific papers for a post by its Name (aligned with backend query params).
+  Future<List<PaperModel>> getPapersByPost(String postName) async {
+    return searchPapers('', postName: postName);
+  }
+
+  /// Handles the search and filtering logic using the query parameters defined in your PapersController
   Future<List<PaperModel>> searchPapers(
     String query, {
     String? dept,
     String? year,
     String? stage,
+    String? postName,
   }) async {
     try {
-      // Build query parameters
-      final queryParameters = <String, String>{
-        'q': query,
-      };
-      if (dept != null) queryParameters['dept'] = dept;
-      if (year != null) queryParameters['year'] = year;
-      if (stage != null) queryParameters['stage'] = stage;
+      final queryParameters = <String, String>{};
+      
+      if (query.isNotEmpty) queryParameters['search'] = query;
+      if (dept != null) queryParameters['departmentName'] = dept;
+      if (year != null) queryParameters['examYear'] = year;
+      if (stage != null) queryParameters['stageName'] = stage;
+      if (postName != null) queryParameters['postName'] = postName;
 
-      final uri = Uri.parse('$baseUrl/papers/search').replace(queryParameters: queryParameters);
+      final uri = Uri.parse('$baseUrl/Papers').replace(queryParameters: queryParameters);
+      print('Requesting Papers: $uri');
+      
       final response = await http.get(uri, headers: _headers);
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
         return data.map((json) => PaperModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to search papers');
+        print('ApiService Error (${response.statusCode}): ${response.body}');
+        return [];
       }
     } catch (e) {
       print('Error searching papers: $e');
@@ -106,22 +83,24 @@ class ApiService {
     }
   }
 
-  /// Fetches posts for a specific department.
-  Future<List<PostModel>> getPostsByDepartment(int departmentId) async {
+  /// Fetches posts for a specific department using the ID
+  Future<List<PostModel>> getPostsByDepartment(String departmentId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/departments/$departmentId/posts'),
-        headers: _headers,
+      final uri = Uri.parse('$baseUrl/Papers/posts').replace(
+        queryParameters: {'departmentId': departmentId}
       );
+      
+      final response = await http.get(uri, headers: _headers);
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
         return data.map((json) => PostModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load posts for department $departmentId');
+        print('ApiService Error (${response.statusCode}): ${response.body}');
+        return [];
       }
     } catch (e) {
-      print('Error fetching posts by department: $e');
+      print('Error fetching posts: $e');
       return [];
     }
   }
