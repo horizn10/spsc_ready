@@ -95,16 +95,18 @@ class _SearchHeaderState extends State<SearchHeader> {
 }
 
 class FilterSection extends StatefulWidget {
-  final ValueChanged<String?>? onDeptChanged;
-  final ValueChanged<String?>? onYearChanged;
-  final ValueChanged<String?>? onStageChanged;
+  final ValueChanged<List<String>>? onDeptsChanged;
+  final ValueChanged<List<String>>? onYearsChanged;
+  final ValueChanged<List<String>>? onStagesChanged;
+  final ValueChanged<List<String>>? onPostsChanged;
   final VoidCallback? onClear;
 
   const FilterSection({
     super.key,
-    this.onDeptChanged,
-    this.onYearChanged,
-    this.onStageChanged,
+    this.onDeptsChanged,
+    this.onYearsChanged,
+    this.onStagesChanged,
+    this.onPostsChanged,
     this.onClear,
   });
 
@@ -113,17 +115,30 @@ class FilterSection extends StatefulWidget {
 }
 
 class _FilterSectionState extends State<FilterSection> {
-  String _selectedDept = 'All Departments';
-  String _selectedYear = 'All Years';
-  String? _selectedStage;
+  List<String> _selectedDepts = [];
+  List<String> _selectedYears = [];
+  List<String> _selectedStages = [];
+  List<String> _selectedPosts = [];
 
   void _clearFilters() {
     setState(() {
-      _selectedDept = 'All Departments';
-      _selectedYear = 'All Years';
-      _selectedStage = null;
+      _selectedDepts = [];
+      _selectedYears = [];
+      _selectedStages = [];
+      _selectedPosts = [];
     });
     widget.onClear?.call();
+  }
+
+  void _toggleSelection(List<String> list, String value, ValueChanged<List<String>>? onChanged) {
+    setState(() {
+      if (list.contains(value)) {
+        list.remove(value);
+      } else {
+        list.add(value);
+      }
+    });
+    onChanged?.call(List.from(list));
   }
 
   @override
@@ -167,7 +182,7 @@ class _FilterSectionState extends State<FilterSection> {
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                           color: AppColors.headingText)),
-                  Text('DEPARTMENT, YEAR, AND STAGE',
+                  Text('DEPT, POST, YEAR, AND STAGE',
                       style: TextStyle(
                           fontSize: 10,
                           color: AppColors.bodyText,
@@ -180,51 +195,47 @@ class _FilterSectionState extends State<FilterSection> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Divider(color: AppColors.border, height: 32),
-                  _buildFilterDropdown('DEPARTMENT', _selectedDept, [
-                    'All Departments',
+                  _buildMultiSelectSection('DEPARTMENT', [
                     'Personnel',
                     'Public Works',
                     'Finance',
                     'Education',
                     'Police Dept'
-                  ], (val) {
-                    setState(() => _selectedDept = val!);
-                    widget.onDeptChanged?.call(val == 'All Departments' ? null : val);
-                  }),
-                  const SizedBox(height: 16),
-                  _buildFilterDropdown('YEAR', _selectedYear, [
-                    'All Years',
+                  ], _selectedDepts, (val) => _toggleSelection(_selectedDepts, val, widget.onDeptsChanged)),
+                  const SizedBox(height: 20),
+                  _buildMultiSelectSection('POST', [
+                    'Under Secretary',
+                    'Assistant Engineer',
+                    'Accounts Officer',
+                    'Teacher',
+                    'Sub Inspector'
+                  ], _selectedPosts, (val) => _toggleSelection(_selectedPosts, val, widget.onPostsChanged)),
+                  const SizedBox(height: 20),
+                  _buildMultiSelectSection('YEAR', [
                     '2024',
                     '2023',
                     '2022',
                     '2021',
                     '2020'
-                  ], (val) {
-                    setState(() => _selectedYear = val!);
-                    widget.onYearChanged?.call(val == 'All Years' ? null : val);
-                  }),
-                  const SizedBox(height: 16),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('EXAM STAGE:',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF94A3B8))),
-                  ),
+                  ], _selectedYears, (val) => _toggleSelection(_selectedYears, val, widget.onYearsChanged)),
+                  const SizedBox(height: 20),
+                  const Text('EXAM STAGE:',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF94A3B8))),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      _stageChip('Prelims', _selectedStage == 'Prelims', (label) {
-                        setState(() => _selectedStage = _selectedStage == label ? null : label);
-                        widget.onStageChanged?.call(_selectedStage);
+                      _buildStageCheckbox('Prelims', _selectedStages.contains('Prelims'), (val) {
+                        _toggleSelection(_selectedStages, 'Prelims', widget.onStagesChanged);
                       }),
-                      const SizedBox(width: 8),
-                      _stageChip('Mains', _selectedStage == 'Mains', (label) {
-                        setState(() => _selectedStage = _selectedStage == label ? null : label);
-                        widget.onStageChanged?.call(_selectedStage);
+                      const SizedBox(width: 24),
+                      _buildStageCheckbox('Mains', _selectedStages.contains('Mains'), (val) {
+                        _toggleSelection(_selectedStages, 'Mains', widget.onStagesChanged);
                       }),
                     ],
                   ),
@@ -248,28 +259,7 @@ class _FilterSectionState extends State<FilterSection> {
     );
   }
 
-  Widget _stageChip(String label, bool isSelected, ValueChanged<String> onSelected) {
-    return FilterChip(
-      label: Text(label, 
-        style: TextStyle(
-          fontSize: 12, 
-          color: isSelected ? Colors.white : AppColors.bodyText,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        )
-      ),
-      selected: isSelected,
-      onSelected: (bool selected) => onSelected(label),
-      selectedColor: AppColors.primary,
-      checkmarkColor: Colors.white,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
-      ),
-    );
-  }
-
-  Widget _buildFilterDropdown(String label, String value, List<String> items, ValueChanged<String?> onChanged) {
+  Widget _buildMultiSelectSection(String label, List<String> options, List<String> selectedValues, ValueChanged<String> onToggle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -278,37 +268,68 @@ class _FilterSectionState extends State<FilterSection> {
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF94A3B8))),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFF),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: value,
-              icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF94A3B8)),
-              items: items.map((String item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(item, style: const TextStyle(fontSize: 14, color: Color(0xFF475569))),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
-          ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = selectedValues.contains(option);
+            return FilterChip(
+              label: Text(option,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSelected ? Colors.white : AppColors.bodyText,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  )),
+              selected: isSelected,
+              onSelected: (_) => onToggle(option),
+              selectedColor: AppColors.primary,
+              checkmarkColor: Colors.white,
+              backgroundColor: const Color(0xFFF8FAFF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
+              ),
+            );
+          }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildStageCheckbox(String label, bool isSelected, ValueChanged<bool?> onChanged) {
+    return InkWell(
+      onTap: () => onChanged(!isSelected),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 24,
+            width: 24,
+            child: Checkbox(
+              value: isSelected,
+              onChanged: onChanged,
+              activeColor: AppColors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(fontSize: 14, color: AppColors.bodyText)),
+        ],
+      ),
     );
   }
 }
 
 class ResultsHeader extends StatelessWidget {
-  final int count;
-  const ResultsHeader({super.key, this.count = 0});
+  final int currentCount;
+  final int totalCount;
+  
+  const ResultsHeader({
+    super.key, 
+    this.currentCount = 0,
+    this.totalCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +343,7 @@ class ResultsHeader extends StatelessWidget {
                   color: AppColors.headingText,
                   fontSize: 16,
                   fontWeight: FontWeight.bold)),
-          Text('Showing $count Papers',
+          Text('Showing $currentCount of $totalCount Papers',
               style: const TextStyle(
                   color: Color(0xFF94A3B8),
                   fontSize: 11,
@@ -335,10 +356,96 @@ class ResultsHeader extends StatelessWidget {
 }
 
 class PaginationFooter extends StatelessWidget {
-  const PaginationFooter({super.key});
+  final int currentPage;
+  final int totalPages;
+  final ValueChanged<int> onPageChanged;
+
+  const PaginationFooter({
+    super.key,
+    required this.currentPage,
+    required this.totalPages,
+    required this.onPageChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink(); // Simplified for now as search is the main focus
+    if (totalPages <= 0) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Left Arrow Button
+          _buildArrowButton(
+            icon: Icons.chevron_left_rounded,
+            onPressed: currentPage > 1 ? () => onPageChanged(currentPage - 1) : null,
+          ),
+          const SizedBox(width: 12),
+
+          // ToggleButtons for Page Numbers
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                )
+              ],
+            ),
+            child: ToggleButtons(
+              isSelected: List.generate(totalPages, (index) => index + 1 == currentPage),
+              onPressed: (index) => onPageChanged(index + 1),
+              borderRadius: BorderRadius.circular(12),
+              selectedColor: Colors.white,
+              fillColor: AppColors.primary,
+              color: AppColors.headingText,
+              constraints: const BoxConstraints(minWidth: 42, minHeight: 42),
+              renderBorder: false, // We use the container's border
+              children: List.generate(totalPages, (index) {
+                return Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                );
+              }),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+          // Right Arrow Button
+          _buildArrowButton(
+            icon: Icons.chevron_right_rounded,
+            onPressed: currentPage < totalPages ? () => onPageChanged(currentPage + 1) : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArrowButton({required IconData icon, VoidCallback? onPressed}) {
+    final bool isDisabled = onPressed == null;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        color: isDisabled ? Colors.grey.shade300 : AppColors.primary,
+        constraints: const BoxConstraints(minWidth: 42, minHeight: 42),
+        style: IconButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
   }
 }

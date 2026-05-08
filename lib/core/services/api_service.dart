@@ -8,6 +8,7 @@ import 'auth_service.dart';
 class ApiService {
   // Use 10.0.2.2 for Android Emulator. 
   // HTTPS: 7241, HTTP: 5116 (Based on standard .NET configurations)
+  // Use 192.168.40.200 for Physical Phone
   static const String baseUrl = 'https://10.0.2.2:7241/api';
 
   Map<String, String> get _headers {
@@ -23,7 +24,7 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/Papers/departments'),
         headers: _headers,
-      );
+      ).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -45,34 +46,41 @@ class ApiService {
 
   /// Fetches the specific papers for a post by its Name (aligned with backend query params).
   Future<List<PaperModel>> getPapersByPost(String postName) async {
-    return searchPapers('', postName: postName);
+    return searchPapers('', postNames: [postName]);
   }
 
   /// Handles the search and filtering logic using the query parameters defined in your PapersController
   Future<List<PaperModel>> searchPapers(
     String query, {
-    String? dept,
-    String? year,
-    String? stage,
-    String? postName,
+    List<String>? depts,
+    List<String>? years,
+    List<String>? stages,
+    List<String>? postNames,
   }) async {
     try {
-      final queryParameters = <String, String>{};
+      final queryParameters = <String, dynamic>{};
       
       if (query.isNotEmpty) queryParameters['search'] = query;
-      if (dept != null) queryParameters['departmentName'] = dept;
-      if (year != null) queryParameters['examYear'] = year;
-      if (stage != null) queryParameters['stageName'] = stage;
-      if (postName != null) queryParameters['postName'] = postName;
+      if (depts != null && depts.isNotEmpty) queryParameters['departmentName'] = depts;
+      if (years != null && years.isNotEmpty) queryParameters['examYear'] = years;
+      if (stages != null && stages.isNotEmpty) queryParameters['stageName'] = stages;
+      if (postNames != null && postNames.isNotEmpty) queryParameters['postName'] = postNames;
 
-      final uri = Uri.parse('$baseUrl/Papers').replace(queryParameters: queryParameters);
+      // Ensure the endpoint is correct: /api/papers
+      final uri = Uri.parse('$baseUrl/papers').replace(queryParameters: queryParameters);
       print('Requesting Papers: $uri');
       
-      final response = await http.get(uri, headers: _headers);
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
-        return data.map((json) => PaperModel.fromJson(json)).toList();
+        return data
+            .map((json) => PaperModel.fromJson(json))
+            .where((paper) =>
+                paper.paperName.isNotEmpty &&
+                paper.pdfUrl.isNotEmpty &&
+                paper.pdfUrl != 'https://10.0.2.2:7241/')
+            .toList();
       } else {
         print('ApiService Error (${response.statusCode}): ${response.body}');
         return [];
@@ -90,7 +98,7 @@ class ApiService {
         queryParameters: {'departmentId': departmentId}
       );
       
-      final response = await http.get(uri, headers: _headers);
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);

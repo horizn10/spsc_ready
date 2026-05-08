@@ -75,20 +75,34 @@ class _DepartmentSectionState extends State<DepartmentSection> {
               const Center(child: Text('No departments found.'))
             else
               SizedBox(
-                height: 320, // Height for two rows of cards
+                height: 280, // Height for two rows of folders
                 child: GridView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   physics: const BouncingScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // 2 Rows when scrollDirection is horizontal
-                    mainAxisSpacing: 16, // Horizontal spacing between cards
+                    crossAxisCount: 2, // 2 Rows
+                    mainAxisSpacing: 16, // Horizontal spacing between folders
                     crossAxisSpacing: 16, // Vertical spacing between rows
-                    childAspectRatio: 0.85, // Adjust width vs height of each card
+                    childAspectRatio: 0.75, // Wider cards to ensure 2x2 grid fits well with a peek of the 3rd
                   ),
-                  itemCount: departments.length,
+                  // Ensure we have enough slots for the 2xN grid
+                  itemCount: ((departments.length + 1) ~/ 2) * 2,
                   itemBuilder: (context, index) {
-                    return DepartmentCard(department: departments[index]);
+                    const int rows = 2;
+                    final int columns = (departments.length + rows - 1) ~/ rows;
+                    
+                    // Logic to display items side-by-side (Row-major)
+                    // This maps index 0,1,2,3... to fill Top Row first, then Bottom Row
+                    final int gridRow = index % rows;
+                    final int gridCol = index ~/ rows;
+                    final int departmentIndex = (gridRow * columns) + gridCol;
+
+                    if (departmentIndex >= departments.length) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    return DepartmentCard(department: departments[departmentIndex]);
                   },
                 ),
               ),

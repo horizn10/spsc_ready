@@ -189,10 +189,11 @@ class _LoginPageState extends State<LoginPage> {
 
                           if (response.statusCode == 200) {
                             final data = jsonDecode(response.body);
-                            // Support both 'accessToken' and 'token' keys
-                            final token = data['accessToken'] ?? data['token'];
+                            // Based on LoginResponseDto { isSuccessful, message, token }
+                            final bool isSuccessful = data['isSuccessful'] ?? false;
+                            final token = data['token'];
                             
-                            if (token != null) {
+                            if (isSuccessful && token != null) {
                               await AuthService().login(token);
                               
                               if (mounted) {

@@ -22,7 +22,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isAsset = !widget.paper.pdfUrl.startsWith('http');
+    final String pdfUrl = widget.paper.pdfUrl.trim();
+    final bool isAsset = pdfUrl.isNotEmpty && !pdfUrl.startsWith('http');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -60,60 +61,73 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          isAsset
-              ? SfPdfViewer.asset(
-                  widget.paper.pdfUrl,
-                  controller: _pdfViewerController,
-                  canShowScrollHead: true,
-                  canShowScrollStatus: true,
-                  onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                    setState(() {
-                      _totalPages = details.document.pages.count;
-                    });
-                  },
-                  onPageChanged: (PdfPageChangedDetails details) {
-                    setState(() {
-                      _currentPage = details.newPageNumber - 1;
-                    });
-                  },
-                )
-              : SfPdfViewer.network(
-                  widget.paper.pdfUrl,
-                  controller: _pdfViewerController,
-                  canShowScrollHead: true,
-                  canShowScrollStatus: true,
-                  onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                    setState(() {
-                      _totalPages = details.document.pages.count;
-                    });
-                  },
-                  onPageChanged: (PdfPageChangedDetails details) {
-                    setState(() {
-                      _currentPage = details.newPageNumber - 1;
-                    });
-                  },
-                ),
-          
-          // Custom Page Indicator at bottom if preferred over AppBar display
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(20),
+      body: pdfUrl.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('No PDF URL provided for this paper.',
+                      style: TextStyle(color: AppColors.bodyText)),
+                ],
               ),
-              child: Text(
-                '${_currentPage + 1} / $_totalPages',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
+            )
+          : Stack(
+              children: [
+                isAsset
+                    ? SfPdfViewer.asset(
+                        pdfUrl,
+                        controller: _pdfViewerController,
+                        canShowScrollHead: true,
+                        canShowScrollStatus: true,
+                        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                          setState(() {
+                            _totalPages = details.document.pages.count;
+                          });
+                        },
+                        onPageChanged: (PdfPageChangedDetails details) {
+                          setState(() {
+                            _currentPage = details.newPageNumber - 1;
+                          });
+                        },
+                      )
+                    : SfPdfViewer.network(
+                        pdfUrl,
+                        controller: _pdfViewerController,
+                        canShowScrollHead: true,
+                        canShowScrollStatus: true,
+                        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                          setState(() {
+                            _totalPages = details.document.pages.count;
+                          });
+                        },
+                        onPageChanged: (PdfPageChangedDetails details) {
+                          setState(() {
+                            _currentPage = details.newPageNumber - 1;
+                          });
+                        },
+                      ),
+                
+                // Custom Page Indicator at bottom if preferred over AppBar display
+                if (_totalPages > 0)
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_currentPage + 1} / $_totalPages',
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

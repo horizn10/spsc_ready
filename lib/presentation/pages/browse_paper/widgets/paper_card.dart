@@ -50,9 +50,9 @@ class PaperCard extends StatelessWidget {
               Text(
                 paper.examStage.toUpperCase(),
                 style: const TextStyle(
-                  color: Color(0xFF94A3B8),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
                   fontSize: 11,
                 ),
               ),
@@ -60,51 +60,32 @@ class PaperCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Post Name - Main Heading (Bold, #0F172A)
+          // Top Bold: Post Name
           Text(
             paper.postName,
             style: const TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: 20,
+              fontSize: 22,
               color: AppColors.headingText,
               letterSpacing: -0.5,
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 12),
 
-          // Secondary Details
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.bodyText,
-              ),
-              children: [
-                const TextSpan(text: 'Paper Name: '),
-                TextSpan(
-                  text: paper.paperName,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ],
+          // Sub Heading: Paper Name
+          Text(
+            "Paper Name: ${paper.paperName.isNotEmpty ? paper.paperName : 'General Paper'}",
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.bodyText,
-              ),
-              children: [
-                const TextSpan(text: 'Department: '),
-                TextSpan(
-                  text: paper.department.isNotEmpty ? paper.department : 'General',
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.headingText),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 16),
+
+          // Details Section
+          _buildDetailRow('Exam Name:', paper.examName),
+          _buildDetailRow('Department:', paper.department.isNotEmpty ? paper.department : 'General'),
 
           const SizedBox(height: 20),
           const Divider(color: AppColors.border, height: 1),
@@ -154,6 +135,24 @@ class PaperCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 13, color: AppColors.bodyText),
+          children: [
+            TextSpan(text: '$label '),
+            TextSpan(
+              text: value,
+              style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.headingText),
+            ),
+          ],
+        ),
       ),
     );
   }
