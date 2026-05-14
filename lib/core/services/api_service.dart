@@ -76,10 +76,7 @@ class ApiService {
         List<dynamic> data = json.decode(response.body);
         return data
             .map((json) => PaperModel.fromJson(json))
-            .where((paper) =>
-                paper.paperName.isNotEmpty &&
-                paper.pdfUrl.isNotEmpty &&
-                paper.pdfUrl != 'https://10.0.2.2:7241/')
+            .where((paper) => paper.paperName.isNotEmpty)
             .toList();
       } else {
         print('ApiService Error (${response.statusCode}): ${response.body}');
@@ -88,6 +85,30 @@ class ApiService {
     } catch (e) {
       print('Error searching papers: $e');
       return [];
+    }
+  }
+
+  /// Fetches the R2 PDF URL for a specific paper on demand.
+  /// Only called when the user taps "View Paper".
+  Future<String> getPdfUrl(String paperId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/papers/$paperId/pdf-url');
+      print('Fetching PDF URL for paper $paperId: $uri');
+      final response = await http.get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final url = (data['url'] ?? data['Url'] ?? '').toString().trim();
+        print('Got PDF URL: $url');
+        return url;
+      } else {
+        print('getPdfUrl Error (${response.statusCode}): ${response.body}');
+        return '';
+      }
+    } catch (e) {
+      print('Error fetching PDF URL: $e');
+      return '';
     }
   }
 

@@ -5,10 +5,12 @@ import '../../../../core/models/paper_model.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final PaperModel paper;
+  final String pdfUrl; // The on-demand fetched R2 URL
 
   const PdfViewerPage({
     super.key,
     required this.paper,
+    required this.pdfUrl,
   });
 
   @override
@@ -22,8 +24,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final String pdfUrl = widget.paper.pdfUrl.trim();
-    final bool isAsset = pdfUrl.isNotEmpty && !pdfUrl.startsWith('http');
+    final String pdfUrl = widget.pdfUrl.trim();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -75,40 +76,22 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             )
           : Stack(
               children: [
-                isAsset
-                    ? SfPdfViewer.asset(
-                        pdfUrl,
-                        controller: _pdfViewerController,
-                        canShowScrollHead: true,
-                        canShowScrollStatus: true,
-                        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                          setState(() {
-                            _totalPages = details.document.pages.count;
-                          });
-                        },
-                        onPageChanged: (PdfPageChangedDetails details) {
-                          setState(() {
-                            _currentPage = details.newPageNumber - 1;
-                          });
-                        },
-                      )
-                    : SfPdfViewer.network(
-                        pdfUrl,
-                        controller: _pdfViewerController,
-                        canShowScrollHead: true,
-                        canShowScrollStatus: true,
-                        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                          setState(() {
-                            _totalPages = details.document.pages.count;
-                          });
-                        },
-                        onPageChanged: (PdfPageChangedDetails details) {
-                          setState(() {
-                            _currentPage = details.newPageNumber - 1;
-                          });
-                        },
-                      ),
-                
+                SfPdfViewer.network(
+                  pdfUrl,
+                  controller: _pdfViewerController,
+                  canShowScrollHead: true,
+                  canShowScrollStatus: true,
+                  onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                    setState(() {
+                      _totalPages = details.document.pages.count;
+                    });
+                  },
+                  onPageChanged: (PdfPageChangedDetails details) {
+                    setState(() {
+                      _currentPage = details.newPageNumber - 1;
+                    });
+                  },
+                ),
                 // Custom Page Indicator at bottom if preferred over AppBar display
                 if (_totalPages > 0)
                   Positioned(

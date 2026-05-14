@@ -100,12 +100,8 @@ class PaperModel {
       }
     }
 
-    // 8. Extract PDF URL
-    String rawPdfUrl = (json['url'] ?? json['Url'] ?? json['pdfUrl'] ?? json['PdfUrl'] ?? '').toString().trim();
-    if (rawPdfUrl.isNotEmpty && !rawPdfUrl.startsWith('http')) {
-      final separator = rawPdfUrl.startsWith('/') ? '' : '/';
-      rawPdfUrl = 'https://10.0.2.2:7241$separator$rawPdfUrl';
-    }
+    // PDF URL is fetched on-demand, not from the list response
+    const String rawPdfUrl = '';
 
     return PaperModel(
       id: (json['id'] ?? json['Id'])?.toString() ?? '',

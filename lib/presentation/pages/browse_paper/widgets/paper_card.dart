@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../../core/models/paper_model.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/api_service.dart';
 import '../../pdf_viewer/pdf_viewer_page.dart';
 
-class PaperCard extends StatelessWidget {
+class PaperCard extends StatefulWidget {
   final PaperModel paper;
 
   const PaperCard({super.key, required this.paper});
+
+  @override
+  State<PaperCard> createState() => _PaperCardState();
+}
+
+class _PaperCardState extends State<PaperCard> {
+  bool _isLoadingPdf = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +47,7 @@ class PaperCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  paper.year,
+                  widget.paper.year,
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -48,7 +56,7 @@ class PaperCard extends StatelessWidget {
                 ),
               ),
               Text(
-                paper.examStage.toUpperCase(),
+                widget.paper.examStage.toUpperCase(),
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w900,
@@ -62,7 +70,7 @@ class PaperCard extends StatelessWidget {
 
           // Top Bold: Post Name
           Text(
-            paper.postName,
+            widget.paper.postName,
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 22,
@@ -74,7 +82,7 @@ class PaperCard extends StatelessWidget {
 
           // Sub Heading: Paper Name
           Text(
-            "Paper Name: ${paper.paperName.isNotEmpty ? paper.paperName : 'General Paper'}",
+            "Paper Name: ${widget.paper.paperName.isNotEmpty ? widget.paper.paperName : 'General Paper'}",
             style: const TextStyle(
               fontSize: 15,
               color: Color(0xFF64748B),
@@ -84,8 +92,8 @@ class PaperCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Details Section
-          _buildDetailRow('Exam Name:', paper.examName),
-          _buildDetailRow('Department:', paper.department.isNotEmpty ? paper.department : 'General'),
+          _buildDetailRow('Exam Name:', widget.paper.examName),
+          _buildDetailRow('Department:', widget.paper.department.isNotEmpty ? widget.paper.department : 'General'),
 
           const SizedBox(height: 20),
           const Divider(color: AppColors.border, height: 1),
@@ -105,27 +113,62 @@ class PaperCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PdfViewerPage(
-                        paper: paper,
+                onPressed: () async {
+                  if (_isLoadingPdf) return; // Prevent double-tap
+                  setState(() => _isLoadingPdf = true);
+
+                  try {
+                    final apiService = ApiService();
+                    final pdfUrl = await apiService.getPdfUrl(widget.paper.id);
+
+                    if (!mounted) return;
+                    setState(() => _isLoadingPdf = false);
+
+                    if (pdfUrl.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Could not load PDF. Please try again.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PdfViewerPage(
+                          paper: widget.paper,
+                          pdfUrl: pdfUrl, // Pass the freshly fetched URL
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    setState(() => _isLoadingPdf = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                    );
+                  }
                 },
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Paper',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, size: 14),
-                  ],
-                ),
+                child: _isLoadingPdf
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('View Paper',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_rounded, size: 14),
+                        ],
+                      ),
               ),
               IconButton(
                 onPressed: () {},

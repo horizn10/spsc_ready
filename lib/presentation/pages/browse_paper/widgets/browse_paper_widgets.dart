@@ -199,18 +199,18 @@ class _FilterSectionState extends State<FilterSection> {
                 children: [
                   const Divider(color: AppColors.border, height: 32),
                   _buildMultiSelectSection('DEPARTMENT', [
-                    'Personnel',
-                    'Public Works',
-                    'Finance',
-                    'Education',
-                    'Police Dept'
+                    'Police Department',
+                    'Multiple Departments',
+                    'Power Department',
+                    'Education Department',
+                    'Forest and Environment Department'
                   ], _selectedDepts, (val) => _toggleSelection(_selectedDepts, val, widget.onDeptsChanged)),
                   const SizedBox(height: 20),
                   _buildMultiSelectSection('POST', [
                     'Under Secretary',
                     'Assistant Engineer',
                     'Accounts Officer',
-                    'Teacher',
+                    'Statistical Inspector',
                     'Sub Inspector'
                   ], _selectedPosts, (val) => _toggleSelection(_selectedPosts, val, widget.onPostsChanged)),
                   const SizedBox(height: 20),
@@ -219,7 +219,11 @@ class _FilterSectionState extends State<FilterSection> {
                     '2023',
                     '2022',
                     '2021',
-                    '2020'
+                    '2020',
+                    '2019',
+                    '2018',
+                    '2017',
+                    '2016'
                   ], _selectedYears, (val) => _toggleSelection(_selectedYears, val, widget.onYearsChanged)),
                   const SizedBox(height: 20),
                   const Text('EXAM STAGE:',
