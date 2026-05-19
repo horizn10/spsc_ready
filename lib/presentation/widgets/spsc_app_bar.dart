@@ -54,7 +54,9 @@ class SpscAppBar extends StatelessWidget implements PreferredSizeWidget {
           offset: const Offset(0, 45),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           onSelected: (value) async {
-            if (value == 'logout') {
+            if (value == 'profile') {
+              Navigator.pushNamed(context, '/profile');
+            } else if (value == 'logout') {
               await AuthService().logout();
               // No need to navigate, ValueListenableBuilder will update the UI
             }

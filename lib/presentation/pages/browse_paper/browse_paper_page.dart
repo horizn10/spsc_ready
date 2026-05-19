@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/paper_model.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/bookmark_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../home/widgets/department_section.dart';
 import 'widgets/browse_paper_widgets.dart';
@@ -54,6 +55,88 @@ class _BrowsePaperPageState extends State<BrowsePaperPage> {
     });
   }
 
+  void _showBookmarksBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    Icon(Icons.bookmark_rounded, color: AppColors.primary),
+                    SizedBox(width: 12),
+                    Text(
+                      'Bookmarked Papers',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.headingText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: ValueListenableBuilder<List<PaperModel>>(
+                  valueListenable: BookmarkService().bookmarksNotifier,
+                  builder: (context, bookmarks, _) {
+                    if (bookmarks.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.bookmark_border_rounded,
+                                size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              'No bookmarks yet.',
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: bookmarks.length,
+                      itemBuilder: (context, index) {
+                        return PaperCard(paper: bookmarks[index]);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,6 +155,7 @@ class _BrowsePaperPageState extends State<BrowsePaperPage> {
                 });
                 _loadPapers();
               },
+              onBookmarkPressed: () => _showBookmarksBottomSheet(context),
             ),
             const SizedBox(height: 16),
             FilterSection(

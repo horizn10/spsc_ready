@@ -3,7 +3,9 @@ import 'core/theme/app_colors.dart';
 import 'presentation/navigation/main_navigation_wrapper.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
+import 'presentation/pages/profile/user_profile_screen.dart';
 import 'core/services/auth_service.dart';
+import 'core/services/bookmark_service.dart';
 import 'dart:io';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -21,6 +23,7 @@ void main() async {
   
   // Initialize AuthService and check for existing token
   await AuthService().init();
+  await BookmarkService().init();
 
   runApp(const SpscReadyApp());
 }
@@ -56,6 +59,7 @@ class SpscReadyApp extends StatelessWidget {
         '/': (context) => const MainNavigationWrapper(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/profile': (context) => const UserProfileScreen(),
       },
       initialRoute: '/',
     );

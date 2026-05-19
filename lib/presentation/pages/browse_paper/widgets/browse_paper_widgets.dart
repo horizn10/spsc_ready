@@ -3,8 +3,9 @@ import '../../../../core/theme/app_colors.dart';
 
 class SearchHeader extends StatefulWidget {
   final ValueChanged<String>? onChanged;
+  final VoidCallback? onBookmarkPressed;
 
-  const SearchHeader({super.key, this.onChanged});
+  const SearchHeader({super.key, this.onChanged, this.onBookmarkPressed});
 
   @override
   State<SearchHeader> createState() => _SearchHeaderState();
@@ -71,22 +72,25 @@ class _SearchHeaderState extends State<SearchHeader> {
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            height: 54,
-            width: 54,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                )
-              ],
+          GestureDetector(
+            onTap: widget.onBookmarkPressed,
+            child: Container(
+              height: 54,
+              width: 54,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: const Icon(Icons.bookmark_outline, color: AppColors.primary),
             ),
-            child: const Icon(Icons.bookmark_outline, color: AppColors.primary),
           ),
         ],
       ),

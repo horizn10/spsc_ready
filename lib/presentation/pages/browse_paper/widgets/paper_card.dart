@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/paper_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/api_service.dart';
+import '../../../../core/services/bookmark_service.dart';
 import '../../pdf_viewer/pdf_viewer_page.dart';
 
 class PaperCard extends StatefulWidget {
@@ -15,6 +16,7 @@ class PaperCard extends StatefulWidget {
 
 class _PaperCardState extends State<PaperCard> {
   bool _isLoadingPdf = false;
+  final BookmarkService _bookmarkService = BookmarkService();
 
   @override
   Widget build(BuildContext context) {
@@ -170,10 +172,19 @@ class _PaperCardState extends State<PaperCard> {
                         ],
                       ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.bookmark_border_rounded,
-                    color: Color(0xFF64748B), size: 24),
+              ValueListenableBuilder<List<PaperModel>>(
+                valueListenable: _bookmarkService.bookmarksNotifier,
+                builder: (context, bookmarks, child) {
+                  final isBookmarked = _bookmarkService.isBookmarked(widget.paper.id);
+                  return IconButton(
+                    onPressed: () => _bookmarkService.toggleBookmark(widget.paper),
+                    icon: Icon(
+                      isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                      color: isBookmarked ? AppColors.primary : const Color(0xFF64748B),
+                      size: 24,
+                    ),
+                  );
+                },
               ),
             ],
           ),
