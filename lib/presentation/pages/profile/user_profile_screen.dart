@@ -152,7 +152,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ).copyWith(
-                  overlayColor: WidgetStateProperty.all(colorScheme.error.withOpacity(0.1)),
+                  overlayColor: MaterialStateProperty.all(colorScheme.error.withOpacity(0.1)),
                 ),
               ),
             ),

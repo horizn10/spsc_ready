@@ -9,7 +9,7 @@ class ApiService {
   // Use 10.0.2.2 for Android Emulator. 
   // HTTPS: 7241, HTTP: 5116 (Based on standard .NET configurations)
   // Use 192.168.40.200 for Physical Phone
-  static const String baseUrl = 'https://10.0.2.2:7241/api';
+  static const String baseUrl = 'https://192.168.40.200:7241/api';
 
   Map<String, String> get _headers {
     final headers = {'Content-Type': 'application/json'};

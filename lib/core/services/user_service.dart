@@ -5,7 +5,7 @@ import 'auth_service.dart';
 
 class UserService {
   // Use the same base URL logic as ApiService
-  static const String baseUrl = 'https://10.0.2.2:7241/api';
+  static const String baseUrl = 'https://192.168.40.200:7241/api';
 
   Future<UserModel?> getUserProfile() async {
     try {
@@ -13,7 +13,7 @@ class UserService {
       if (token == null) return null;
 
       final response = await http.get(
-        Uri.parse('$baseUrl/User/profile'),
+        Uri.parse('$baseUrl/Account/profile'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
