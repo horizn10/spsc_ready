@@ -44,4 +44,21 @@ class MockQuestion {
       negativeMarks: (json['negativeMarks'] as num?)?.toDouble() ?? 0.25,
     );
   }
+
+  /// Returns a list of [count] dummy questions for UI testing when the API is unavailable.
+  static List<MockQuestion> dummyList(int count) {
+    return List.generate(count, (i) => MockQuestion(
+      questionId: i + 1,
+      questionText: 'Sample question ${i + 1}: Which of the following options is correct regarding the SPSC examination pattern for the year 2023?',
+      imageUrl: null,
+      optionA: 'Option A — First possible answer for question ${i + 1}',
+      optionB: 'Option B — Second possible answer for question ${i + 1}',
+      optionC: 'Option C — Third possible answer for question ${i + 1}',
+      optionD: 'Option D — Fourth possible answer for question ${i + 1}',
+      correctOption: i % 4,          // cycles A,B,C,D
+      explanation: 'This is the explanation for question ${i + 1}. The correct answer is option ${['A','B','C','D'][i % 4]} because...',
+      marks: 1.0,
+      negativeMarks: 0.25,
+    ));
+  }
 }

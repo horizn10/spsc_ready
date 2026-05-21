@@ -3,13 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:spsc_ready/core/models/mock_test_config.dart';
 import 'package:spsc_ready/core/theme/app_colors.dart';
-import 'package:spsc_ready/presentation/pages/mock_test/mock_test_instructions_page.dart';
-import 'package:spsc_ready/presentation/widgets/spsc_app_bar.dart';
+import 'package:spsc_ready/presentation/pages/mock_test/mock_test_subject_selection_page.dart';
 
-/// Local success color for scores and positive indicators.
-const Color _successGreen = Color(0xFF10B981);
-
-/// Page displaying a list of available mock tests with filtering.
+/// Page displaying a list of available mock test categories (Tier 1).
 class MockTestPage extends StatefulWidget {
   const MockTestPage({super.key});
 
@@ -18,24 +14,21 @@ class MockTestPage extends StatefulWidget {
 }
 
 class _MockTestPageState extends State<MockTestPage> {
-  String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Sub Inspector', 'Paper I', 'Paper II'];
-  
   bool _isLoading = false;
-  List<MockTestConfig> _tests = [];
+  List<MockExamCategory> _categories = [];
 
   @override
   void initState() {
     super.initState();
-    _loadTests();
+    _loadCategories();
   }
 
-  Future<void> _loadTests() async {
+  Future<void> _loadCategories() async {
     setState(() => _isLoading = true);
-    // Simulating API call
-    await Future.delayed(const Duration(milliseconds: 800));
+    // Simulating API call for categories
+    await Future.delayed(const Duration(milliseconds: 600));
     setState(() {
-      _tests = MockTestConfig.dummyList();
+      _categories = MockExamCategory.dummyList();
       _isLoading = false;
     });
   }
@@ -48,15 +41,14 @@ class _MockTestPageState extends State<MockTestPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          _buildFilterRow(),
           Expanded(
             child: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
                   )
-                : _tests.isEmpty
+                : _categories.isEmpty
                     ? _buildEmptyState()
-                    : _buildTestList(),
+                    : _buildCategoryList(),
           ),
         ],
       ),
@@ -86,7 +78,7 @@ class _MockTestPageState extends State<MockTestPage> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Choose Your Mock Test',
+            'Choose Your Exam',
             style: TextStyle(
               color: AppColors.headingText,
               fontSize: 24,
@@ -96,7 +88,7 @@ class _MockTestPageState extends State<MockTestPage> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Practice with real SPSC exam papers',
+            'Select a category to view available subjects',
             style: TextStyle(
               color: AppColors.bodyText,
               fontSize: 14,
@@ -107,45 +99,12 @@ class _MockTestPageState extends State<MockTestPage> {
     );
   }
 
-  Widget _buildFilterRow() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Row(
-        children: _filters.map((filter) {
-          final isSelected = _selectedFilter == filter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(filter),
-              selected: isSelected,
-              onSelected: (val) => setState(() => _selectedFilter = filter),
-              showCheckmark: false,
-              backgroundColor: AppColors.blueTint,
-              selectedColor: AppColors.primary,
-              checkmarkColor: Colors.white,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide.none,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildTestList() {
+  Widget _buildCategoryList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      itemCount: _tests.length,
+      itemCount: _categories.length,
       itemBuilder: (context, index) {
-        return MockTestCard(config: _tests[index]);
+        return CategoryCard(category: _categories[index]);
       },
     );
   }
@@ -158,7 +117,7 @@ class _MockTestPageState extends State<MockTestPage> {
           Icon(Icons.quiz_rounded, size: 64, color: AppColors.primary),
           SizedBox(height: 16),
           Text(
-            'No tests found',
+            'No categories found',
             style: TextStyle(
               color: AppColors.headingText,
               fontSize: 18,
@@ -171,11 +130,11 @@ class _MockTestPageState extends State<MockTestPage> {
   }
 }
 
-/// A card displaying summary information about a [MockTestConfig].
-class MockTestCard extends StatelessWidget {
-  final MockTestConfig config;
+/// A card displaying summary information about a [MockExamCategory].
+class CategoryCard extends StatelessWidget {
+  final MockExamCategory category;
 
-  const MockTestCard({super.key, required this.config});
+  const CategoryCard({super.key, required this.category});
 
   @override
   Widget build(BuildContext context) {
@@ -186,120 +145,80 @@ class MockTestCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              color: AppColors.primary,
+      child: InkWell(
+        onTap: () {
+          // Tier 1 -> Tier 2 Navigation
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MockTestSubjectSelectionPage(category: category),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.blueTint,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.account_balance_rounded,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      config.examName,
+                      category.name,
                       style: const TextStyle(
                         color: AppColors.headingText,
-                        fontSize: 15,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      category.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.bodyText,
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.blueTint,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        config.paperType,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _infoItem(Icons.help_outline_rounded, '${config.questionCount} Questions'),
-                        const SizedBox(width: 16),
-                        _infoItem(Icons.timer_outlined, '${config.durationMinutes} Minutes'),
-                      ],
-                    ),
-                    if (config.isAttempted && config.bestScore != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Best: ${config.bestScore!.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: _successGreen,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MockTestInstructionsPage(config: config),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'Start Test',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward_rounded, size: 16),
-                          ],
-                        ),
+                    Text(
+                      '${category.availableTests} Subjects Available',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _infoItem(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.bodyText),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(
-            color: AppColors.bodyText,
-            fontSize: 12,
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: AppColors.border,
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

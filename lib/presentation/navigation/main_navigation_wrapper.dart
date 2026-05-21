@@ -23,11 +23,18 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   void initState() {
     super.initState();
     _pages = [
-      HomePage(onBrowsePressed: () {
-        setState(() {
-          _selectedIndex = 1;
-        });
-      }),
+      HomePage(
+        onBrowsePressed: () {
+          setState(() {
+            _selectedIndex = 1;
+          });
+        },
+        onMockTestPressed: () {
+          setState(() {
+            _selectedIndex = 2;
+          });
+        },
+      ),
       const BrowsePaperPage(),
       const MockTestPage(),
       const SettingsPage(),

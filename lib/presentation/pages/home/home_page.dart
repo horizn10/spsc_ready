@@ -7,8 +7,13 @@ import 'widgets/department_section.dart';
 
 class HomePage extends StatelessWidget {
   final VoidCallback onBrowsePressed;
+  final VoidCallback onMockTestPressed;
 
-  const HomePage({super.key, required this.onBrowsePressed});
+  const HomePage({
+    super.key,
+    required this.onBrowsePressed,
+    required this.onMockTestPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +21,10 @@ class HomePage extends StatelessWidget {
       physics: const BouncingScrollPhysics(),
       children: [
         const SizedBox(height: 32),
-        HeroSection(onBrowsePressed: onBrowsePressed),
+        HeroSection(
+          onBrowsePressed: onBrowsePressed,
+          onMockTestPressed: onMockTestPressed,
+        ),
         const SizedBox(height: 12),
         const SocialProof(),
         const SizedBox(height: 48),

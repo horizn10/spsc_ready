@@ -3,8 +3,13 @@ import '../../../../core/theme/app_colors.dart';
 
 class HeroSection extends StatelessWidget {
   final VoidCallback onBrowsePressed;
+  final VoidCallback onMockTestPressed;
 
-  const HeroSection({super.key, required this.onBrowsePressed});
+  const HeroSection({
+    super.key, 
+    required this.onBrowsePressed,
+    required this.onMockTestPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +78,7 @@ class HeroSection extends StatelessWidget {
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            onPressed: () {},
+            onPressed: onMockTestPressed,
             child: const Text('Take Free Mock Test', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ],

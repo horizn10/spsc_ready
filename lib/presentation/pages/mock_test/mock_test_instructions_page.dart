@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:spsc_ready/core/models/mock_test_config.dart';
 import 'package:spsc_ready/core/theme/app_colors.dart';
+import 'mock_test_active_page.dart';
 
 /// Page displaying instructions and exam summary before starting a mock test.
 class MockTestInstructionsPage extends StatefulWidget {
@@ -21,10 +22,7 @@ class _MockTestInstructionsPageState extends State<MockTestInstructionsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(title: const Text('Active Test')),
-          body: const Center(child: Text('Active Test — Coming in Phase 2')),
-        ),
+        builder: (context) => MockTestActivePage(config: widget.config),
       ),
     );
   }
