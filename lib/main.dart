@@ -3,6 +3,7 @@ import 'core/theme/app_colors.dart';
 import 'presentation/navigation/main_navigation_wrapper.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
+import 'presentation/pages/auth/otp_login_page.dart';
 import 'presentation/pages/profile/user_profile_screen.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/bookmark_service.dart';
@@ -59,6 +60,7 @@ class SpscReadyApp extends StatelessWidget {
         '/': (context) => const MainNavigationWrapper(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/otp-login': (context) => const OtpLoginPage(),
         '/profile': (context) => const UserProfileScreen(),
       },
       initialRoute: '/',

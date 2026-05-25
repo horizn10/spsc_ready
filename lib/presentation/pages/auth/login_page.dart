@@ -285,7 +285,7 @@ class _LoginPageState extends State<LoginPage> {
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      // Handle OTP Login logic
+                      Navigator.pushNamed(context, '/otp-login');
                     },
                     child: const Text(
                       'Login with OTP',
