@@ -190,8 +190,8 @@ class _LoginPageState extends State<LoginPage> {
                           if (response.statusCode == 200) {
                             final data = jsonDecode(response.body);
                             // Based on LoginResponseDto { isSuccessful, message, token }
-                            final bool isSuccessful = data['isSuccessful'] ?? false;
-                            final token = data['token'];
+                            final bool isSuccessful = data['isSuccessful'] ?? data['IsSuccessful'] ?? false;
+                            final token = data['token'] ?? data['Token'];
                             
                             if (isSuccessful && token != null) {
                               await AuthService().login(token);
@@ -208,8 +208,8 @@ class _LoginPageState extends State<LoginPage> {
                             } else {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Error: Login succeeded but no token received.'),
+                                  SnackBar(
+                                    content: Text(data['message'] ?? data['Message'] ?? 'Error: Login succeeded but no token received.'),
                                     backgroundColor: Colors.redAccent,
                                   ),
                                 );

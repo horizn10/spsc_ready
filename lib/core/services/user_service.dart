@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 import 'auth_service.dart';
@@ -10,10 +11,17 @@ class UserService {
   Future<UserModel?> getUserProfile() async {
     try {
       final token = AuthService().token;
-      if (token == null) return null;
+      if (token == null) {
+        debugPrint('UserService: No token found');
+        return null;
+      }
 
+      // The endpoint is /api/account/profile (kshitiz branch)
+      final url = '$baseUrl/account/profile';
+      debugPrint('UserService: Fetching profile from $url');
+      
       final response = await http.get(
-        Uri.parse('$baseUrl/Account/profile'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -21,19 +29,26 @@ class UserService {
         },
       ).timeout(const Duration(seconds: 15));
 
+      debugPrint('UserService: Profile response code: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         return UserModel.fromJson(data);
       } else if (response.statusCode == 401) {
-        // Token might be expired
-        await AuthService().logout();
+        debugPrint('UserService: Unauthorized (Token expired?)');
+        // Do not logout immediately to avoid loop, let the UI handle it
         return null;
       } else {
-        throw Exception('Failed to load profile: ${response.statusCode}');
+        debugPrint('UserService: Error ${response.statusCode} - ${response.body}');
+        // If 404, it means the backend is missing the endpoint (common in branch desync)
+        if (response.statusCode == 404) {
+          debugPrint('UserService: ENDPOINT NOT FOUND. Ensure you merged the kshitiz branch into master on your backend.');
+        }
+        return null;
       }
     } catch (e) {
-      print('Error in UserService.getUserProfile: $e');
-      rethrow;
+      debugPrint('Error in UserService.getUserProfile: $e');
+      return null;
     }
   }
 }

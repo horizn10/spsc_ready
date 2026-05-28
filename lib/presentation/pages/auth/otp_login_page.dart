@@ -192,31 +192,62 @@ class _OtpLoginPageState extends State<OtpLoginPage> {
                           if (_emailController.text.isNotEmpty && 
                               RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text)) {
                             
-                            // Start timer and show success message
-                            _startTimer();
-                            
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('OTP has been sent to your email address'),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                            setState(() => _isLoading = true);
+                            try {
+                              final response = await http.post(
+                                Uri.parse('https://192.168.40.200:7241/api/account/send-otp'),
+                                headers: {'Content-Type': 'application/json'},
+                                body: jsonEncode({'email': _emailController.text}),
+                              ).timeout(const Duration(seconds: 10));
+
+                              if (response.statusCode == 200) {
+                                final data = jsonDecode(response.body);
+                                if (data['success'] == true) {
+                                  _startTimer();
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(data['message'] ?? 'OTP has been sent to your email address'),
+                                        backgroundColor: Colors.green,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(data['message'] ?? 'Failed to send OTP'),
+                                        backgroundColor: Colors.redAccent,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                }
+                              } else {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Server error: ${response.statusCode}'),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Connection error. Please check your internet.'),
+                                    backgroundColor: Colors.redAccent,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
                             }
-
-                            // Optional: Add logic here to call your backend API to actually send the OTP
-                            // try {
-                            //   // await authService.sendOtp(_emailController.text);
-                            // } catch (e) {
-                            //   ScaffoldMessenger.of(context).showSnackBar(
-                            //     const SnackBar(
-                            //       content: Text('Failed to send OTP. Please try again.'),
-                            //       backgroundColor: Colors.redAccent,
-                            //     ),
-                            //   );
-                            // }
-
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -281,33 +312,72 @@ class _OtpLoginPageState extends State<OtpLoginPage> {
                         String otp = _otpControllers.map((c) => c.text).join();
                         if (otp.length < 6) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter 6-digit OTP')),
+                            const SnackBar(
+                              content: Text('Please enter 6-digit OTP'),
+                              backgroundColor: Colors.orange,
+                            ),
                           );
                           return;
                         }
                         
                         setState(() => _isLoading = true);
                         
-                        // Placeholder for OTP login API call
                         try {
-                           // Example:
-                           // final response = await http.post(
-                           //   Uri.parse('https://192.168.40.200:7241/api/account/login-otp'),
-                           //   headers: {'Content-Type': 'application/json'},
-                           //   body: jsonEncode({'email': _emailController.text, 'otp': otp}),
-                           // );
+                           final response = await http.post(
+                             Uri.parse('https://192.168.40.200:7241/api/account/verify-otp-login'),
+                             headers: {'Content-Type': 'application/json'},
+                             body: jsonEncode({
+                               'email': _emailController.text, 
+                               'code': otp
+                             }),
+                           ).timeout(const Duration(seconds: 10));
                            
-                           // Mock success
-                           await Future.delayed(const Duration(seconds: 2));
-                           
-                           if (mounted) {
-                             ScaffoldMessenger.of(context).showSnackBar(
-                               const SnackBar(
-                                 content: Text('OTP Login feature coming soon!'),
-                                 backgroundColor: Colors.blue,
-                               ),
-                             );
+                           if (response.statusCode == 200) {
+                             final data = jsonDecode(response.body);
+                             final bool isSuccessful = data['isSuccessful'] ?? data['IsSuccessful'] ?? false;
+                             final token = data['token'] ?? data['Token'];
+                             
+                             if (isSuccessful && token != null) {
+                               await AuthService().login(token);
+                               
+                               if (mounted) {
+                                 ScaffoldMessenger.of(context).showSnackBar(
+                                   const SnackBar(
+                                     content: Text('Login Successful!'),
+                                     backgroundColor: Colors.green,
+                                   ),
+                                 );
+                                 Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                               }
+                             } else {
+                               if (mounted) {
+                                 ScaffoldMessenger.of(context).showSnackBar(
+                                   SnackBar(
+                                     content: Text(data['message'] ?? data['Message'] ?? 'Invalid OTP. Please try again.'),
+                                     backgroundColor: Colors.redAccent,
+                                   ),
+                                 );
+                               }
+                             }
+                           } else {
+                             if (mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                 SnackBar(
+                                   content: Text('Error: ${response.statusCode}. Please try again.'),
+                                   backgroundColor: Colors.redAccent,
+                                 ),
+                               );
+                             }
                            }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Connection error. Please check your internet.'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
                         } finally {
                           if (mounted) setState(() => _isLoading = false);
                         }
