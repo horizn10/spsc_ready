@@ -73,10 +73,25 @@ class _MockTestActivePageState extends State<MockTestActivePage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              final result = _controller.submitTest();
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MockTestResultPage(result: result)));
+              setState(() => _controller.isLoading = true);
+              
+              final result = await _controller.submitTest();
+              
+              if (mounted) {
+                if (result != null) {
+                  Navigator.pushReplacement(
+                    context, 
+                    MaterialPageRoute(builder: (_) => MockTestResultPage(result: result!))
+                  );
+                } else {
+                  setState(() => _controller.isLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to submit test. Please try again.'), backgroundColor: Colors.redAccent)
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white),
             child: const Text('Submit'),

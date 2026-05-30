@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/mock_test_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/mock_test_service.dart';
 import 'mock_test_instructions_page.dart';
 
 class MockTestSubjectSelectionPage extends StatefulWidget {
@@ -26,14 +27,22 @@ class _MockTestSubjectSelectionPageState extends State<MockTestSubjectSelectionP
 
   Future<void> _loadSubjects() async {
     setState(() => _isLoading = true);
-    // Simulating API call filtered by category
-    await Future.delayed(const Duration(milliseconds: 600));
-    setState(() {
-      _subjects = MockTestConfig.dummyList()
-          .where((test) => test.categoryName == widget.category.name)
-          .toList();
-      _isLoading = false;
-    });
+    try {
+      final subjects = await MockTestService().getSubjects(widget.category.id, widget.category.name);
+      if (mounted) {
+        setState(() {
+          _subjects = subjects;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _subjects = [];
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override

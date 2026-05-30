@@ -16,7 +16,7 @@ class OptionTile extends StatelessWidget {
   final String text;
   final int optionIndex;
   final int? selectedOption;
-  final int correctOption;
+  final int? correctOption;
   final bool isSubmitted;
   final VoidCallback onTap;
 
@@ -26,7 +26,7 @@ class OptionTile extends StatelessWidget {
     required this.text,
     required this.optionIndex,
     this.selectedOption,
-    required this.correctOption,
+    this.correctOption,
     required this.isSubmitted,
     required this.onTap,
   });

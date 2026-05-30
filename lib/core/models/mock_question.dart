@@ -1,6 +1,6 @@
 // lib/core/models/mock_question.dart
 
-/// Model representing a single question in a Mock Test.
+/// Model representing a single question in a Mock Test (Maps to QuestionDto in Backend).
 class MockQuestion {
   final int questionId;
   final String questionText;
@@ -9,10 +9,11 @@ class MockQuestion {
   final String optionB;
   final String optionC;
   final String optionD;
-  final int correctOption; // 0=A, 1=B, 2=C, 3=D
-  final String explanation;
-  final double marks;
-  final double negativeMarks;
+  final int orderIndex;
+  
+  // These might be null during the test if the API follows security best practices
+  final int? correctOption; // 0=A, 1=B, 2=C, 3=D
+  final String? explanation;
 
   const MockQuestion({
     required this.questionId,
@@ -22,43 +23,52 @@ class MockQuestion {
     required this.optionB,
     required this.optionC,
     required this.optionD,
-    required this.correctOption,
-    required this.explanation,
-    this.marks = 1.0,
-    this.negativeMarks = 0.25,
+    required this.orderIndex,
+    this.correctOption,
+    this.explanation,
   });
 
-  /// Creates a [MockQuestion] from a JSON map.
   factory MockQuestion.fromJson(Map<String, dynamic> json) {
     return MockQuestion(
-      questionId: json['questionId'] as int,
-      questionText: json['questionText'] as String,
-      imageUrl: json['imageUrl'] as String?,
-      optionA: json['optionA'] as String,
-      optionB: json['optionB'] as String,
-      optionC: json['optionC'] as String,
-      optionD: json['optionD'] as String,
-      correctOption: json['correctOption'] as int,
-      explanation: json['explanation'] as String,
-      marks: (json['marks'] as num?)?.toDouble() ?? 1.0,
-      negativeMarks: (json['negativeMarks'] as num?)?.toDouble() ?? 0.25,
+      questionId: (json['questionId'] ?? json['QuestionId']) as int,
+      questionText: (json['questionText'] ?? json['QuestionText']) as String? ?? '',
+      imageUrl: (json['imageUrl'] ?? json['ImageUrl']) as String?,
+      optionA: (json['optionA'] ?? json['OptionA']) as String? ?? '',
+      optionB: (json['optionB'] ?? json['OptionB']) as String? ?? '',
+      optionC: (json['optionC'] ?? json['OptionC']) as String? ?? '',
+      optionD: (json['optionD'] ?? json['OptionD']) as String? ?? '',
+      orderIndex: (json['orderIndex'] ?? json['OrderIndex']) as int? ?? 0,
     );
   }
 
-  /// Returns a list of [count] dummy questions for UI testing when the API is unavailable.
-  static List<MockQuestion> dummyList(int count) {
-    return List.generate(count, (i) => MockQuestion(
-      questionId: i + 1,
-      questionText: 'Sample question ${i + 1}: Which of the following options is correct regarding the SPSC examination pattern for the year 2023?',
-      imageUrl: null,
-      optionA: 'Option A — First possible answer for question ${i + 1}',
-      optionB: 'Option B — Second possible answer for question ${i + 1}',
-      optionC: 'Option C — Third possible answer for question ${i + 1}',
-      optionD: 'Option D — Fourth possible answer for question ${i + 1}',
-      correctOption: i % 4,          // cycles A,B,C,D
-      explanation: 'This is the explanation for question ${i + 1}. The correct answer is option ${['A','B','C','D'][i % 4]} because...',
-      marks: 1.0,
-      negativeMarks: 0.25,
-    ));
+  static List<MockQuestion> dummyList(int count) => [];
+}
+
+/// Model representing a section in a Mock Test (Maps to SectionWithQuestionsDto).
+class MockSection {
+  final int sectionId;
+  final String sectionName;
+  final double marksPerQuestion;
+  final double negativeMarks;
+  final List<MockQuestion> questions;
+
+  const MockSection({
+    required this.sectionId,
+    required this.sectionName,
+    required this.marksPerQuestion,
+    required this.negativeMarks,
+    required this.questions,
+  });
+
+  factory MockSection.fromJson(Map<String, dynamic> json) {
+    return MockSection(
+      sectionId: (json['sectionId'] ?? json['SectionId']) as int,
+      sectionName: (json['sectionName'] ?? json['SectionName']) as String? ?? '',
+      marksPerQuestion: ((json['marksPerQuestion'] ?? json['MarksPerQuestion']) as num?)?.toDouble() ?? 1.0,
+      negativeMarks: ((json['negativeMarks'] ?? json['NegativeMarks']) as num?)?.toDouble() ?? 0.25,
+      questions: ((json['questions'] ?? json['Questions']) as List? ?? [])
+          .map((q) => MockQuestion.fromJson(q))
+          .toList(),
+    );
   }
 }

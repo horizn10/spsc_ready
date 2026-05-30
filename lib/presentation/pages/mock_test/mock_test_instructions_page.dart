@@ -110,8 +110,9 @@ class _MockTestInstructionsPageState extends State<MockTestInstructionsPage> {
       children: [
         _infoChip(Icons.help_outline_rounded, '${widget.config.questionCount} Questions'),
         _infoChip(Icons.timer_outlined, '${widget.config.durationMinutes} Minutes'),
-        _infoChip(Icons.add_circle_outline_rounded, '+${widget.config.marksPerQuestion} Correct'),
-        _infoChip(Icons.remove_circle_outline_rounded, '−${widget.config.negativeMarks} Wrong'),
+        _infoChip(Icons.stars_rounded, '${widget.config.totalMarks} Total Marks'),
+        if (widget.config.passingMarks != null)
+          _infoChip(Icons.check_circle_outline_rounded, '${widget.config.passingMarks} Passing'),
       ],
     );
   }
@@ -145,7 +146,7 @@ class _MockTestInstructionsPageState extends State<MockTestInstructionsPage> {
     final rules = [
       'This test consists of ${widget.config.questionCount} multiple-choice questions.',
       'Total duration is ${widget.config.durationMinutes} minutes. Timer starts on "Start Test".',
-      'Each correct answer: +${widget.config.marksPerQuestion} mark. Wrong answer: −${widget.config.negativeMarks} marks.',
+      'Each question carries marks as defined in its section.',
       'Unanswered questions carry no marks and no penalty.',
       'Navigate freely between questions using the Question Palette.',
       'Flag questions for later review using the flag button.',

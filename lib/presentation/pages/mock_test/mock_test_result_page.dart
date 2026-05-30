@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 
 const _successColor = Color(0xFF22C55E);
 const _dangerColor  = Color(0xFFEF4444);
-const _warningColor = Color(0xFFF59E0B);
 
 /// Page showing the results and analytics of a completed mock test.
 class MockTestResultPage extends StatefulWidget {
@@ -28,8 +27,8 @@ class _MockTestResultPageState extends State<MockTestResultPage> with SingleTick
     super.initState();
     _animController = AnimationController(duration: const Duration(seconds: 2), vsync: this);
     
-    final double endValue = widget.result.maxScore > 0 
-        ? (widget.result.score / widget.result.maxScore).clamp(0.0, 1.0) 
+    final double endValue = widget.result.totalMarks > 0 
+        ? (widget.result.score / widget.result.totalMarks).clamp(0.0, 1.0)
         : 0.0;
 
     _scoreAnimation = Tween<double>(begin: 0, end: endValue)
@@ -58,25 +57,6 @@ class _MockTestResultPageState extends State<MockTestResultPage> with SingleTick
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(children: [
-          // --- AUTO-SUBMIT BANNER ---
-          if (widget.result.autoSubmitted)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                border: Border.all(color: _warningColor),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(children: const [
-                Icon(Icons.timer_off_rounded, color: _warningColor, size: 18),
-                SizedBox(width: 10),
-                Expanded(child: Text('Time\'s up! The test was auto-submitted.',
-                  style: TextStyle(color: Color(0xFF92400E), fontSize: 13)))
-              ])
-            ),
-
           // --- HERO SCORE CARD ---
           Container(
             width: double.infinity,
@@ -102,7 +82,7 @@ class _MockTestResultPageState extends State<MockTestResultPage> with SingleTick
                           Text(widget.result.formattedScore,
                                style: const TextStyle(color: Colors.white, fontSize: 26,
                                                 fontWeight: FontWeight.w900)),
-                          Text('/ ${widget.result.maxScore.toStringAsFixed(0)}',
+                          Text('/ ${widget.result.totalMarks}',
                                style: const TextStyle(color: Colors.white70, fontSize: 12)),
                         ])
                       )
@@ -253,8 +233,120 @@ class MockTestReviewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Coming Soon')),
-      body: const Center(child: Text('Answer Review — Phase 3')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Review Answers', style: TextStyle(color: AppColors.headingText, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.headingText, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: result.answerReviews.length,
+        itemBuilder: (context, index) {
+          final review = result.answerReviews[index];
+          
+          return Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Question ${index + 1}', 
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                    if (review.selectedOption == null)
+                      const Text('Unanswered', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600))
+                    else if (review.isCorrect)
+                      const Text('Correct', style: TextStyle(color: _successColor, fontSize: 12, fontWeight: FontWeight.w600))
+                    else
+                      const Text('Incorrect', style: TextStyle(color: _dangerColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(review.questionText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.headingText)),
+                const SizedBox(height: 20),
+                // Note: The backend AnswerReviewDto doesn't return all option texts, only the labels.
+                // If we want the full text here, we'd need to keep the original questions or have backend return them.
+                // For now, let's show what we have.
+                _ReviewSummary(review: review),
+                
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.blueTint,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.lightbulb_outline, size: 16, color: AppColors.primary),
+                          SizedBox(width: 8),
+                          Text('Explanation', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(review.explanation, style: const TextStyle(color: AppColors.bodyText, fontSize: 13, height: 1.5)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReviewSummary extends StatelessWidget {
+  final AnswerReview review;
+  const _ReviewSummary({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    String getLabel(int? idx) => idx == null ? 'None' : String.fromCharCode('A'.codeUnitAt(0) + idx);
+
+    return Column(
+      children: [
+        _miniTile(
+          label: 'Your Answer', 
+          value: getLabel(review.selectedOption), 
+          color: review.selectedOption == null ? Colors.grey : (review.isCorrect ? _successColor : _dangerColor)
+        ),
+        const SizedBox(height: 8),
+        _miniTile(
+          label: 'Correct Answer', 
+          value: getLabel(review.correctOption), 
+          color: _successColor
+        ),
+      ],
+    );
+  }
+
+  Widget _miniTile({required String label, required String value, required Color color}) {
+    return Row(
+      children: [
+        Text('$label: ', style: const TextStyle(color: AppColors.bodyText, fontSize: 13)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+          child: Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
+        ),
+      ],
     );
   }
 }

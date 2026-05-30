@@ -3,61 +3,101 @@
 import 'mock_question.dart';
 import 'mock_test_config.dart';
 
-/// Model containing the results of a completed mock test session.
+/// Model containing the results of a completed mock test session (Maps to AttemptResultDto).
 class MockTestResult {
-  final MockTestConfig config;
-  final List<MockQuestion> questions;
-  final Map<int, int> answers; // questionIndex -> selectedOptionIndex
+  final int attemptId;
+  final String mockTestTitle;
+  final double score;
+  final int totalMarks;
+  final double percentage;
   final int correct;
   final int wrong;
   final int unanswered;
-  final double score;
-  final double maxScore;
-  final int timeTakenSeconds;
-  final bool autoSubmitted;
+  final bool isPassed;
+  final List<AnswerReview> answerReviews;
+  final MockTestConfig config; // Keeping config for UI context
 
   const MockTestResult({
-    required this.config,
-    required this.questions,
-    required this.answers,
+    required this.attemptId,
+    required this.mockTestTitle,
+    required this.score,
+    required this.totalMarks,
+    required this.percentage,
     required this.correct,
     required this.wrong,
     required this.unanswered,
-    required this.score,
-    required this.maxScore,
-    required this.timeTakenSeconds,
-    required this.autoSubmitted,
+    required this.isPassed,
+    required this.answerReviews,
+    required this.config,
   });
 
-  /// Accuracy percentage calculated from answered questions.
-  double get accuracyPercent =>
-      (correct + wrong) == 0 ? 0 : (correct / (correct + wrong)) * 100;
+  factory MockTestResult.fromJson(Map<String, dynamic> json, MockTestConfig config) {
+    return MockTestResult(
+      attemptId: (json['attemptId'] ?? json['AttemptId']) as int,
+      mockTestTitle: (json['mockTestTitle'] ?? json['MockTestTitle']) as String? ?? '',
+      score: ((json['totalScore'] ?? json['TotalScore']) as num?)?.toDouble() ?? 0.0,
+      totalMarks: (json['totalMarks'] ?? json['TotalMarks']) as int? ?? 0,
+      percentage: ((json['percentage'] ?? json['Percentage']) as num?)?.toDouble() ?? 0.0,
+      correct: (json['correctCount'] ?? json['CorrectCount']) as int? ?? 0,
+      wrong: (json['wrongCount'] ?? json['WrongCount']) as int? ?? 0,
+      unanswered: (json['skippedCount'] ?? json['SkippedCount']) as int? ?? 0,
+      isPassed: (json['isPassed'] ?? json['IsPassed']) as bool? ?? false,
+      config: config,
+      answerReviews: ((json['answerReview'] ?? json['AnswerReview']) as List? ?? [])
+          .map((r) => AnswerReview.fromJson(r))
+          .toList(),
+    );
+  }
 
-  /// Formatted score string.
+  double get accuracyPercent => (correct + wrong) == 0 ? 0 : (correct / (correct + wrong)) * 100;
   String get formattedScore => score.toStringAsFixed(2);
+  
+  // These are now dynamic from backend but we can keep some UI logic
+  String get performanceLabel => isPassed ? 'Passed' : 'Keep Practicing';
+  String get performanceEmoji => isPassed ? '🎉' : '💪';
+  String get formattedTimeTaken => ""; 
+  
+  // Backwards compatibility for UI code that might still use 'questions' or 'answers'
+  List<MockQuestion> get questions => answerReviews.map((r) => MockQuestion(
+    questionId: r.questionId,
+    questionText: r.questionText,
+    optionA: "", optionB: "", optionC: "", optionD: "", // Options aren't in AnswerReviewDto usually
+    orderIndex: 0,
+    correctOption: r.correctOption,
+    explanation: r.explanation,
+  )).toList();
+}
 
-  /// Formatted time taken string (e.g., 5m 30s).
-  String get formattedTimeTaken {
-    final m = timeTakenSeconds ~/ 60;
-    final s = timeTakenSeconds % 60;
-    return '${m}m ${s}s';
-  }
+class AnswerReview {
+  final int questionId;
+  final String questionText;
+  final int? selectedOption; // 0=A, 1=B, 2=C, 3=D
+  final int correctOption;
+  final bool isCorrect;
+  final String explanation;
 
-  /// Label describing the user's performance.
-  String get performanceLabel {
-    final pct = (score / maxScore) * 100;
-    if (pct >= 80) return 'Excellent';
-    if (pct >= 60) return 'Good';
-    if (pct >= 40) return 'Average';
-    return 'Keep Practicing';
-  }
+  const AnswerReview({
+    required this.questionId,
+    required this.questionText,
+    this.selectedOption,
+    required this.correctOption,
+    required this.isCorrect,
+    required this.explanation,
+  });
 
-  /// Emoji representing the user's performance.
-  String get performanceEmoji {
-    final pct = (score / maxScore) * 100;
-    if (pct >= 80) return '🎉';
-    if (pct >= 60) return '👍';
-    if (pct >= 40) return '📚';
-    return '💪';
+  factory AnswerReview.fromJson(Map<String, dynamic> json) {
+    int? charToIdx(String? char) {
+      if (char == null || char.isEmpty) return null;
+      return char.toUpperCase().codeUnitAt(0) - 'A'.codeUnitAt(0);
+    }
+
+    return AnswerReview(
+      questionId: (json['questionId'] ?? json['QuestionId']) as int,
+      questionText: (json['questionText'] ?? json['QuestionText']) as String? ?? '',
+      selectedOption: charToIdx((json['selectedOption'] ?? json['SelectedOption']) as String?),
+      correctOption: charToIdx((json['correctOption'] ?? json['CorrectOption']) as String?) ?? 0,
+      isCorrect: (json['isCorrect'] ?? json['IsCorrect']) as bool? ?? false,
+      explanation: (json['explanation'] ?? json['Explanation']) as String? ?? 'No explanation available.',
+    );
   }
 }

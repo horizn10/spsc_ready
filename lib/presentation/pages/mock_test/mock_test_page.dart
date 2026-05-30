@@ -5,6 +5,8 @@ import 'package:spsc_ready/core/models/mock_test_config.dart';
 import 'package:spsc_ready/core/theme/app_colors.dart';
 import 'package:spsc_ready/presentation/pages/mock_test/mock_test_subject_selection_page.dart';
 
+import 'package:spsc_ready/core/services/mock_test_service.dart';
+
 /// Page displaying a list of available mock test categories (Tier 1).
 class MockTestPage extends StatefulWidget {
   const MockTestPage({super.key});
@@ -25,12 +27,22 @@ class _MockTestPageState extends State<MockTestPage> {
 
   Future<void> _loadCategories() async {
     setState(() => _isLoading = true);
-    // Simulating API call for categories
-    await Future.delayed(const Duration(milliseconds: 600));
-    setState(() {
-      _categories = MockExamCategory.dummyList();
-      _isLoading = false;
-    });
+    try {
+      final categories = await MockTestService().getCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _categories = MockExamCategory.dummyList();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -200,7 +212,7 @@ class CategoryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${category.availableTests} Subjects Available',
+                      'Exam Code: ${category.code} • ${category.year}',
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 12,
