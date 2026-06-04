@@ -51,7 +51,6 @@ class MockTestController extends ChangeNotifier {
     try {
       // 1. Start Attempt
       attemptId = await MockTestService().startAttempt(config.testId);
-      if (attemptId == null) throw Exception("Failed to start attempt");
 
       // 2. Load Questions
       sections = await MockTestService().getMockTestDetail(config.testId);

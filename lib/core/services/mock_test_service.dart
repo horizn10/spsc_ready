@@ -8,10 +8,13 @@ import '../models/mock_test_result.dart';
 import 'auth_service.dart';
 
 class MockTestService {
-  static const String baseUrl = 'https://192.168.40.200:7241/api/v1';
+  static const String baseUrl = 'https://192.168.40.200:7241';
 
   Map<String, String> get _headers {
-    final headers = {'Content-Type': 'application/json'};
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
     headers.addAll(AuthService().getAuthHeaders());
     return headers;
   }
@@ -19,7 +22,7 @@ class MockTestService {
   /// 1. Get Exams (Categories)
   Future<List<MockExamCategory>> getCategories() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/exams'), headers: _headers);
+      final response = await http.get(Uri.parse('$baseUrl/api/v1/exams'), headers: _headers);
       if (response.statusCode == 200) {
         List data = json.decode(response.body);
         return data.map((e) => MockExamCategory.fromJson(e)).toList();
@@ -34,7 +37,7 @@ class MockTestService {
   /// 2. Get Mock Tests for an Exam
   Future<List<MockTestConfig>> getSubjects(int examId, String examName) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/exams/$examId/mocktests'), headers: _headers);
+      final response = await http.get(Uri.parse('$baseUrl/api/v1/exams/$examId/mocktests'), headers: _headers);
       if (response.statusCode == 200) {
         List data = json.decode(response.body);
         return data.map((e) => MockTestConfig.fromJson(e, categoryName: examName, examId: examId)).toList();
@@ -47,28 +50,57 @@ class MockTestService {
   }
 
   /// 3. Start an attempt (Returns AttemptId)
-  Future<int?> startAttempt(int mockTestId) async {
+  Future<int> startAttempt(int mockTestId) async {
+    final url = Uri.parse('$baseUrl/api/v1/attempts/start');
     try {
+      print('Starting attempt for mockTestId: $mockTestId at $url');
+      
       final response = await http.post(
-        Uri.parse('$baseUrl/attempts/start'),
+        url,
         headers: _headers,
         body: json.encode({'mockTestId': mockTestId}),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return (data['attemptId'] ?? data['AttemptId']) as int;
+      ).timeout(const Duration(seconds: 15));
+
+      print('StartAttempt Response Status: ${response.statusCode}');
+      print('StartAttempt Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic data = json.decode(response.body);
+        dynamic rawId;
+        
+        if (data is Map) {
+          rawId = data['attemptId'] ?? data['AttemptId'] ?? data['id'] ?? data['Id'];
+        } else {
+          rawId = data;
+        }
+        
+        if (rawId == null) {
+          throw Exception('Server responded successfully but no attemptId was found in body: ${response.body}');
+        }
+        
+        final id = int.tryParse(rawId.toString());
+        if (id == null) {
+          throw Exception('Invalid attemptId format received: $rawId');
+        }
+        return id;
+      } else {
+        throw Exception('Server error (${response.statusCode}): ${response.body}');
       }
-      return null;
     } catch (e) {
       print('Error startAttempt: $e');
-      return null;
+      if (e is Exception) rethrow;
+      throw Exception('Failed to start attempt: $e');
     }
   }
 
   /// 4. Get Test Detail (Sections & Questions)
   Future<List<MockSection>> getMockTestDetail(int mockTestId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/mocktests/$mockTestId'), headers: _headers);
+      final response = await http.get(Uri.parse('$baseUrl/api/v1/mocktests/$mockTestId'), headers: _headers);
+      
+      print('MockTest API Response Status: ${response.statusCode}');
+      print('MockTest API Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         List sectionsData = data['sections'] ?? data['Sections'] ?? [];
@@ -98,7 +130,7 @@ class MockTestService {
       }).toList();
 
       final response = await http.post(
-        Uri.parse('$baseUrl/attempts/$attemptId/submit'),
+        Uri.parse('$baseUrl/api/v1/attempts/$attemptId/submit'),
         headers: _headers,
         body: json.encode({
           'attemptId': attemptId,
