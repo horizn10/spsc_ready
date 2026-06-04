@@ -75,21 +75,35 @@ class _MockTestActivePageState extends State<MockTestActivePage> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              if (!mounted) return;
               setState(() => _controller.isLoading = true);
               
-              final result = await _controller.submitTest();
-              
-              if (mounted) {
+              try {
+                final result = await _controller.submitTest();
+                
+                if (!mounted) return;
+
                 if (result != null) {
                   Navigator.pushReplacement(
                     context, 
-                    MaterialPageRoute(builder: (_) => MockTestResultPage(result: result!))
+                    MaterialPageRoute(builder: (_) => MockTestResultPage(result: result))
                   );
                 } else {
                   setState(() => _controller.isLoading = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to submit test. Please try again.'), backgroundColor: Colors.redAccent)
-                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to submit test. Please check your connection.'), backgroundColor: Colors.redAccent)
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _controller.isLoading = false);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('An error occurred: $e'), backgroundColor: Colors.redAccent)
+                    );
+                  }
                 }
               }
             },

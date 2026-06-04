@@ -115,9 +115,13 @@ class MockTestService {
 
   /// 5. Submit Attempt
   Future<MockTestResult?> submitAttempt(int attemptId, Map<int, int> userAnswers, Set<int> flagged, List<MockQuestion> allQuestions, MockTestConfig config) async {
+    final url = Uri.parse('$baseUrl/api/v1/attempts/$attemptId/submit');
     try {
-      final answersList = allQuestions.map((q) {
-        final selectedIdx = userAnswers[allQuestions.indexOf(q)];
+      print('Submitting attempt $attemptId to $url');
+      final answersList = allQuestions.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final q = entry.value;
+        final selectedIdx = userAnswers[idx];
         String? char;
         if (selectedIdx != null) {
           char = String.fromCharCode('A'.codeUnitAt(0) + selectedIdx);
@@ -125,26 +129,40 @@ class MockTestService {
         return {
           'questionId': q.questionId,
           'selectedOption': char,
-          'isMarkedForReview': flagged.contains(allQuestions.indexOf(q)),
+          'isMarkedForReview': flagged.contains(idx),
         };
       }).toList();
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/attempts/$attemptId/submit'),
-        headers: _headers,
-        body: json.encode({
-          'attemptId': attemptId,
-          'answers': answersList,
-        }),
-      );
+      final requestBody = json.encode({
+        'attemptId': attemptId,
+        'answers': answersList,
+      });
 
-      if (response.statusCode == 200) {
+      final response = await http.post(
+        url,
+        headers: _headers,
+        body: requestBody,
+      ).timeout(const Duration(seconds: 30));
+
+      print('SubmitAttempt Response Status: ${response.statusCode}');
+      print('SubmitAttempt Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
-        return MockTestResult.fromJson(data, config);
+        try {
+          return MockTestResult.fromJson(data, config);
+        } catch (e, stack) {
+          print('Error parsing MockTestResult: $e');
+          print(stack);
+          return null;
+        }
+      } else {
+        print('Submit Error (${response.statusCode}): ${response.body}');
+        return null;
       }
-      return null;
-    } catch (e) {
+    } catch (e, stack) {
       print('Error submitAttempt: $e');
+      print(stack);
       return null;
     }
   }

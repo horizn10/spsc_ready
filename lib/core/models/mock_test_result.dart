@@ -32,20 +32,24 @@ class MockTestResult {
   });
 
   factory MockTestResult.fromJson(Map<String, dynamic> json, MockTestConfig config) {
+    // Helper to safely get list
+    List<AnswerReview> parseReviews(dynamic data) {
+      if (data == null || data is! List) return [];
+      return data.map((r) => AnswerReview.fromJson(r as Map<String, dynamic>)).toList();
+    }
+
     return MockTestResult(
-      attemptId: (json['attemptId'] ?? json['AttemptId']) as int,
+      attemptId: ((json['attemptId'] ?? json['AttemptId']) as num?)?.toInt() ?? 0,
       mockTestTitle: (json['mockTestTitle'] ?? json['MockTestTitle']) as String? ?? '',
       score: ((json['totalScore'] ?? json['TotalScore']) as num?)?.toDouble() ?? 0.0,
-      totalMarks: (json['totalMarks'] ?? json['TotalMarks']) as int? ?? 0,
+      totalMarks: ((json['totalMarks'] ?? json['TotalMarks']) as num?)?.toInt() ?? 0,
       percentage: ((json['percentage'] ?? json['Percentage']) as num?)?.toDouble() ?? 0.0,
-      correct: (json['correctCount'] ?? json['CorrectCount']) as int? ?? 0,
-      wrong: (json['wrongCount'] ?? json['WrongCount']) as int? ?? 0,
-      unanswered: (json['skippedCount'] ?? json['SkippedCount']) as int? ?? 0,
+      correct: ((json['correctCount'] ?? json['CorrectCount']) as num?)?.toInt() ?? 0,
+      wrong: ((json['wrongCount'] ?? json['WrongCount']) as num?)?.toInt() ?? 0,
+      unanswered: ((json['skippedCount'] ?? json['SkippedCount']) as num?)?.toInt() ?? 0,
       isPassed: (json['isPassed'] ?? json['IsPassed']) as bool? ?? false,
       config: config,
-      answerReviews: ((json['answerReview'] ?? json['AnswerReview']) as List? ?? [])
-          .map((r) => AnswerReview.fromJson(r))
-          .toList(),
+      answerReviews: parseReviews(json['answerReview'] ?? json['AnswerReview']),
     );
   }
 
@@ -86,16 +90,28 @@ class AnswerReview {
   });
 
   factory AnswerReview.fromJson(Map<String, dynamic> json) {
-    int? charToIdx(String? char) {
-      if (char == null || char.isEmpty) return null;
-      return char.toUpperCase().codeUnitAt(0) - 'A'.codeUnitAt(0);
+    int? charToIdx(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      final s = value.toString();
+      if (s.isEmpty) return null;
+      try {
+        // If it's a number string "0", "1"...
+        final parsed = int.tryParse(s);
+        if (parsed != null) return parsed;
+        
+        // If it's a char "A", "B"...
+        return s.toUpperCase().codeUnitAt(0) - 'A'.codeUnitAt(0);
+      } catch (e) {
+        return null;
+      }
     }
 
     return AnswerReview(
-      questionId: (json['questionId'] ?? json['QuestionId']) as int,
+      questionId: ((json['questionId'] ?? json['QuestionId']) as num?)?.toInt() ?? 0,
       questionText: (json['questionText'] ?? json['QuestionText']) as String? ?? '',
-      selectedOption: charToIdx((json['selectedOption'] ?? json['SelectedOption']) as String?),
-      correctOption: charToIdx((json['correctOption'] ?? json['CorrectOption']) as String?) ?? 0,
+      selectedOption: charToIdx(json['selectedOption'] ?? json['SelectedOption']),
+      correctOption: charToIdx(json['correctOption'] ?? json['CorrectOption']) ?? 0,
       isCorrect: (json['isCorrect'] ?? json['IsCorrect']) as bool? ?? false,
       explanation: (json['explanation'] ?? json['Explanation']) as String? ?? 'No explanation available.',
     );
