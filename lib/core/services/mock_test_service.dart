@@ -1,6 +1,7 @@
 // lib/core/services/mock_test_service.dart
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/mock_question.dart';
 import '../models/mock_test_config.dart';
@@ -19,7 +20,6 @@ class MockTestService {
     return headers;
   }
 
-  /// 1. Get Exams (Categories)
   Future<List<MockExamCategory>> getCategories() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/api/v1/exams'), headers: _headers);
@@ -29,12 +29,11 @@ class MockTestService {
       }
       return [];
     } catch (e) {
-      print('Error getCategories: $e');
+      debugPrint('Error getCategories: $e');
       return [];
     }
   }
 
-  /// 2. Get Mock Tests for an Exam
   Future<List<MockTestConfig>> getSubjects(int examId, String examName) async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/api/v1/exams/$examId/mocktests'), headers: _headers);
@@ -44,63 +43,36 @@ class MockTestService {
       }
       return [];
     } catch (e) {
-      print('Error getSubjects: $e');
+      debugPrint('Error getSubjects: $e');
       return [];
     }
   }
 
-  /// 3. Start an attempt (Returns AttemptId)
   Future<int> startAttempt(int mockTestId) async {
     final url = Uri.parse('$baseUrl/api/v1/attempts/start');
     try {
-      print('Starting attempt for mockTestId: $mockTestId at $url');
-      
       final response = await http.post(
         url,
         headers: _headers,
         body: json.encode({'mockTestId': mockTestId}),
       ).timeout(const Duration(seconds: 15));
 
-      print('StartAttempt Response Status: ${response.statusCode}');
-      print('StartAttempt Response Body: ${response.body}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final dynamic data = json.decode(response.body);
-        dynamic rawId;
-        
-        if (data is Map) {
-          rawId = data['attemptId'] ?? data['AttemptId'] ?? data['id'] ?? data['Id'];
-        } else {
-          rawId = data;
-        }
-        
-        if (rawId == null) {
-          throw Exception('Server responded successfully but no attemptId was found in body: ${response.body}');
-        }
-        
-        final id = int.tryParse(rawId.toString());
-        if (id == null) {
-          throw Exception('Invalid attemptId format received: $rawId');
-        }
+        final data = json.decode(response.body);
+        final id = int.tryParse((data['attemptId'] ?? data['id']).toString());
+        if (id == null) throw Exception('No attemptId found');
         return id;
-      } else {
-        throw Exception('Server error (${response.statusCode}): ${response.body}');
       }
+      throw Exception('Server error: ${response.statusCode}');
     } catch (e) {
-      print('Error startAttempt: $e');
-      if (e is Exception) rethrow;
-      throw Exception('Failed to start attempt: $e');
+      debugPrint('Error startAttempt: $e');
+      rethrow;
     }
   }
 
-  /// 4. Get Test Detail (Sections & Questions)
   Future<List<MockSection>> getMockTestDetail(int mockTestId) async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/api/v1/mocktests/$mockTestId'), headers: _headers);
-      
-      print('MockTest API Response Status: ${response.statusCode}');
-      print('MockTest API Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         List sectionsData = data['sections'] ?? data['Sections'] ?? [];
@@ -108,61 +80,43 @@ class MockTestService {
       }
       return [];
     } catch (e) {
-      print('Error getMockTestDetail: $e');
+      debugPrint('Error getMockTestDetail: $e');
       return [];
     }
   }
 
-  /// 5. Submit Attempt
-  Future<MockTestResult?> submitAttempt(int attemptId, Map<int, int> userAnswers, Set<int> flagged, List<MockQuestion> allQuestions, MockTestConfig config) async {
+  Future<MockTestResult?> submitAttempt(int attemptId, Map<int, int> userAnswers, Set<int> flagged, List<MockQuestion> allQuestions, MockTestConfig config, {int timeTakenSeconds = 0}) async {
     final url = Uri.parse('$baseUrl/api/v1/attempts/$attemptId/submit');
     try {
-      print('Submitting attempt $attemptId to $url');
       final answersList = allQuestions.asMap().entries.map((entry) {
         final idx = entry.key;
-        final q = entry.value;
         final selectedIdx = userAnswers[idx];
-        String? char;
-        if (selectedIdx != null) {
-          char = String.fromCharCode('A'.codeUnitAt(0) + selectedIdx);
-        }
         return {
-          'questionId': q.questionId,
-          'selectedOption': char,
+          'questionId': entry.value.questionId,
+          'selectedOption': selectedIdx == null ? null : String.fromCharCode(65 + selectedIdx),
           'isMarkedForReview': flagged.contains(idx),
         };
       }).toList();
 
-      final requestBody = json.encode({
-        'attemptId': attemptId,
-        'answers': answersList,
-      });
-
       final response = await http.post(
         url,
         headers: _headers,
-        body: requestBody,
-      ).timeout(const Duration(seconds: 30));
+        body: json.encode({'attemptId': attemptId, 'answers': answersList}),
+      ).timeout(const Duration(seconds: 45));
 
-      print('SubmitAttempt Response Status: ${response.statusCode}');
-      print('SubmitAttempt Response Body: ${response.body}');
-
+      debugPrint('Submit Response: ${response.statusCode}');
+      
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
-        try {
-          return MockTestResult.fromJson(data, config);
-        } catch (e, stack) {
-          print('Error parsing MockTestResult: $e');
-          print(stack);
-          return null;
-        }
-      } else {
-        print('Submit Error (${response.statusCode}): ${response.body}');
-        return null;
+        final cleanBody = response.body.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '');
+        final data = json.decode(cleanBody);
+        final result = MockTestResult.fromJson(data, config, timeTakenSeconds: timeTakenSeconds);
+        debugPrint('Parsed successfully: Score ${result.score}');
+        return result;
       }
+      return null;
     } catch (e, stack) {
-      print('Error submitAttempt: $e');
-      print(stack);
+      debugPrint('Critical Error in submitAttempt: $e');
+      debugPrint(stack.toString());
       return null;
     }
   }

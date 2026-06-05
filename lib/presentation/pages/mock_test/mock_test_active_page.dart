@@ -58,13 +58,13 @@ class _MockTestActivePageState extends State<MockTestActivePage> {
           _controller.goToQuestion(i);
           _pageController.jumpToPage(i);
         },
-        onSubmit: () => _confirmAndSubmit(context),
+        onSubmit: () => _confirmAndSubmit(),
         isSubmitted: _controller.isSubmitted,
       ),
     );
   }
 
-  void _confirmAndSubmit(BuildContext context) {
+  void _confirmAndSubmit() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -76,34 +76,41 @@ class _MockTestActivePageState extends State<MockTestActivePage> {
             onPressed: () async {
               Navigator.pop(ctx);
               if (!mounted) return;
+              
               setState(() => _controller.isLoading = true);
               
+              // Capture the navigator and scaffoldMessenger before async gaps
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              
               try {
+                debugPrint('Submitting test...');
                 final result = await _controller.submitTest();
                 
                 if (!mounted) return;
 
                 if (result != null) {
-                  Navigator.pushReplacement(
-                    context, 
+                  debugPrint('Submission success. Navigating to results...');
+                  // Small delay to ensure any pending UI work is done
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  
+                  navigator.pushReplacement(
                     MaterialPageRoute(builder: (_) => MockTestResultPage(result: result))
                   );
                 } else {
+                  debugPrint('Submission failed: result is null');
                   setState(() => _controller.isLoading = false);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to submit test. Please check your connection.'), backgroundColor: Colors.redAccent)
-                    );
-                  }
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Failed to get results. Please check your connection.'))
+                  );
                 }
               } catch (e) {
+                debugPrint('Submission error: $e');
                 if (mounted) {
                   setState(() => _controller.isLoading = false);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('An error occurred: $e'), backgroundColor: Colors.redAccent)
-                    );
-                  }
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(content: Text('An error occurred: $e'), backgroundColor: Colors.redAccent)
+                  );
                 }
               }
             },
@@ -236,7 +243,7 @@ class _MockTestActivePageState extends State<MockTestActivePage> {
                                 _controller.nextQuestion();
                                 _pageController.nextPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut);
                               } : null,
-                              onSubmit: index == _controller.totalQuestions - 1 ? () => _confirmAndSubmit(context) : null,
+                              onSubmit: index == _controller.totalQuestions - 1 ? () => _confirmAndSubmit() : null,
                             ),
                           );
                         },

@@ -118,12 +118,15 @@ class MockTestController extends ChangeNotifier {
 
     if (attemptId == null) return null;
 
+    final timeTakenSeconds = (config.durationMinutes * 60) - remainingSeconds;
+
     final result = await MockTestService().submitAttempt(
       attemptId!, 
       answers, 
       flagged, 
       questions,
-      config
+      config,
+      timeTakenSeconds: timeTakenSeconds,
     );
     
     return result;
