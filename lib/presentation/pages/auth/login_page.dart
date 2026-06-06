@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import '../../../core/config/api_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 
@@ -182,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         try {
                           final response = await http.post(
-                            Uri.parse('https://192.168.40.200:7241/api/account/login'),
+                            Uri.parse('${ApiConfig.baseUrl}/account/login'),
                             headers: {'Content-Type': 'application/json'},
                             body: jsonEncode(loginData),
                           ).timeout(const Duration(seconds: 10));

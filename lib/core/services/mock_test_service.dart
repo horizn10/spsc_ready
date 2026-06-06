@@ -3,13 +3,14 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/mock_question.dart';
 import '../models/mock_test_config.dart';
 import '../models/mock_test_result.dart';
 import 'auth_service.dart';
 
 class MockTestService {
-  static const String baseUrl = 'https://192.168.40.200:7241';
+  static const String baseUrl = ApiConfig.rawBaseUrl;
 
   Map<String, String> get _headers {
     final headers = {

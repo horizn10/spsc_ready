@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import '../../../core/config/api_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 
@@ -259,7 +260,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         try {
                           final response = await http.post(
-                            Uri.parse('https://192.168.40.200:7241/api/account/register'),
+                            Uri.parse('${ApiConfig.baseUrl}/account/register'),
                             headers: {'Content-Type': 'application/json'},
                             body: jsonEncode(registrationData),
                           );

@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/user_model.dart';
 import 'auth_service.dart';
 
 class UserService {
   // Use the same base URL logic as ApiService
-  static const String baseUrl = 'https://192.168.40.200:7241/api';
+  static const String baseUrl = ApiConfig.baseUrl;
 
   Future<UserModel?> getUserProfile() async {
     try {

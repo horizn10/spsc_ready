@@ -1,15 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/department_model.dart';
 import '../models/post_model.dart';
 import '../models/paper_model.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  // Use 10.0.2.2 for Android Emulator. 
-  // HTTPS: 7241, HTTP: 5116 (Based on standard .NET configurations)
-  // Use 192.168.40.200 for Physical Phone
-  static const String baseUrl = 'https://192.168.40.200:7241/api';
+  static const String baseUrl = ApiConfig.baseUrl;
 
   Map<String, String> get _headers {
     final headers = {'Content-Type': 'application/json'};
